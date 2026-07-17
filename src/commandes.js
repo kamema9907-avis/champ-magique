@@ -14,10 +14,32 @@ import * as THREE from 'three';
 import * as R from './reglages.js';
 
 const PLAN_SOL = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+const HAUT = new THREE.Vector3(0, 1, 0);
 
 export function creerCommandes({ canvas, camera, scene }) {
   const touches = new Set();
   let mode = 'pc';
+
+  // --- Repere de l'ecran, projete au sol ----------------------------------
+  // Les fleches et le joystick expriment une direction A L'ECRAN ("vers la
+  // droite", "vers le fond"). Il faut la traduire en direction du monde.
+  //
+  // On la DEDUIT de la camera au lieu d'ecrire les signes a la main. Raison :
+  // Three.js est en repere droitier, alors qu'Ursina (la version Python) est en
+  // repere gaucher. Une camera placee derriere le joueur y regarde donc vers
+  // +Z... mais son axe droite devient -X. Suppose "+X = a droite" et tout part
+  // en miroir : c'est exactement le bug qui est remonte de l'iPad.
+  // Calcule ainsi, le code reste juste meme si on deplace la camera.
+  const fondEcran = new THREE.Vector3();    // vers le haut de l'ecran, au sol
+  const droiteEcran = new THREE.Vector3();  // vers la droite de l'ecran, au sol
+
+  function majRepereEcran() {
+    camera.getWorldDirection(fondEcran);
+    fondEcran.y = 0;
+    fondEcran.normalize();
+    droiteEcran.crossVectors(fondEcran, HAUT).normalize();
+  }
+  majRepereEcran();
 
   // --- Tactile ------------------------------------------------------------
   // Un seul doigt commande : le PREMIER pose, et lui seul, jusqu'a ce qu'il se
@@ -99,22 +121,32 @@ export function creerCommandes({ canvas, camera, scene }) {
 
   const resultat = { x: 0, z: 0, facteur: 0 };
 
+  /**
+   * Traduit une direction exprimee A L'ECRAN en direction du monde.
+   * @param ex vers la droite de l'ecran ; ey vers le haut de l'ecran.
+   */
+  function versLeMonde(ex, ey, facteur) {
+    resultat.x = droiteEcran.x * ex + fondEcran.x * ey;
+    resultat.z = droiteEcran.z * ex + fondEcran.z * ey;
+    resultat.facteur = facteur;
+    return resultat;
+  }
+
   function direction(positionJoueur) {
     resultat.x = 0; resultat.z = 0; resultat.facteur = 0;
 
     // 1. Les fleches sont prioritaires : un reflexe deja acquis ne doit jamais
     //    etre contredit par la position du curseur ou d'un doigt.
     const fx = (touches.has('ArrowRight') ? 1 : 0) - (touches.has('ArrowLeft') ? 1 : 0);
-    const fz = (touches.has('ArrowUp') ? 1 : 0) - (touches.has('ArrowDown') ? 1 : 0);
-    if (fx !== 0 || fz !== 0) {
-      const norme = Math.hypot(fx, fz);
-      resultat.x = fx / norme; resultat.z = fz / norme; resultat.facteur = 1;
-      return resultat;
+    const fy = (touches.has('ArrowUp') ? 1 : 0) - (touches.has('ArrowDown') ? 1 : 0);
+    if (fx !== 0 || fy !== 0) {
+      const norme = Math.hypot(fx, fy);
+      return versLeMonde(fx / norme, fy / norme, 1);
     }
 
     // 2. Le joystick tactile. L'ecart du pouce par rapport a son point de depart
-    //    donne la direction ET la vitesse. L'ecran etant en Y vers le bas et le
-    //    monde en Z vers le fond, l'axe vertical s'inverse.
+    //    donne la direction ET la vitesse. L'axe Y de l'ecran descend, alors que
+    //    "vers le haut de l'ecran" monte : d'ou le signe sur dy.
     if (doigt) {
       const dx = doigt.x - doigt.origineX;
       const dy = doigt.y - doigt.origineY;
@@ -122,7 +154,7 @@ export function creerCommandes({ canvas, camera, scene }) {
       if (ecart > R.ZONE_MORTE_JOYSTICK) {
         const facteur = Math.min(1, (ecart - R.ZONE_MORTE_JOYSTICK) /
                                     (R.RAYON_JOYSTICK - R.ZONE_MORTE_JOYSTICK));
-        resultat.x = dx / ecart; resultat.z = -dy / ecart; resultat.facteur = facteur;
+        return versLeMonde(dx / ecart, -dy / ecart, facteur);
       }
       return resultat;
     }
@@ -186,6 +218,12 @@ export function creerCommandes({ canvas, camera, scene }) {
       forcerFleches(liste) { touches.clear(); liste.forEach((t) => touches.add(t)); },
       etatSouris() { return { sourisActive, pointSolValide, pointSol: pointSol.clone() }; },
       doigtPose() { return doigt !== null; },
+      repereEcran() {
+        return {
+          droite: { x: +droiteEcran.x.toFixed(3), z: +droiteEcran.z.toFixed(3) },
+          fond: { x: +fondEcran.x.toFixed(3), z: +fondEcran.z.toFixed(3) },
+        };
+      },
     },
   };
 }

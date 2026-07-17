@@ -53,6 +53,41 @@ test('la largeur de champ visible est la meme en 16:9 et en 4:3', async ({ brows
   expect(mesures.ipad.ouverture).toBeGreaterThan(mesures.pc.ouverture + 5);
 });
 
+test('les fleches vont dans le bon sens A L\'ECRAN', async ({ page }) => {
+  await ouvrir(page);
+  await page.evaluate(() => window.__test.demarrer());
+  await page.waitForTimeout(200);
+  console.log('  repere ecran :', JSON.stringify(await page.evaluate(() => window.__test.repereEcran())));
+
+  // Chaque fleche est testee separement, en pixels d'ecran. Les fleches
+  // souffraient du meme bug d'inversion que le tactile : personne ne l'avait vu
+  // parce que la souris, elle, passe par un lancer de rayon et reste juste.
+  const attendus = [
+    ['ArrowRight', 'droite', (ex, ey) => ex > 20 && Math.abs(ey) < 20],
+    ['ArrowLeft', 'gauche', (ex, ey) => ex < -20 && Math.abs(ey) < 20],
+    ['ArrowUp', 'haut', (ex, ey) => ey < -20 && Math.abs(ex) < 20],
+    ['ArrowDown', 'bas', (ex, ey) => ey > 20 && Math.abs(ex) < 20],
+  ];
+
+  for (const [touche, sens, verifie] of attendus) {
+    const avant = await page.evaluate(() => window.__test.etat().joueur);
+    await page.evaluate((t) => window.__test.forcerFleches([t]), touche);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => window.__test.forcerFleches([]));
+    const apres = await page.evaluate(() => window.__test.etat().joueur);
+
+    const ecran = await page.evaluate(([a, b]) => ({
+      avant: window.__test.projeter(a.x, a.z),
+      apres: window.__test.projeter(b.x, b.z),
+    }), [avant, apres]);
+    const ex = ecran.apres.x - ecran.avant.x;
+    const ey = ecran.apres.y - ecran.avant.y;
+
+    console.log(`  ${touche.padEnd(11)} -> (${ex.toFixed(0)} px, ${ey.toFixed(0)} px)  attendu : ${sens}`);
+    expect(verifie(ex, ey), `${touche} doit deplacer le personnage vers le ${sens} de l'ecran`).toBe(true);
+  }
+});
+
 test.describe('joystick tactile', () => {
   // On ne prend pas le prereglage devices['iPad...'] : il impose WebKit, ce qui
   // forcerait un autre worker. On decrit donc l'iPad a la main.
@@ -91,13 +126,27 @@ test.describe('joystick tactile', () => {
       await page.screenshot({ path: path.join(CAPTURES, 'test_joystick.png') });
 
       const pendant = await page.evaluate(() => window.__test.etat());
-      const dx = pendant.joueur.x - depart.x;
-      const dz = pendant.joueur.z - depart.z;
-      console.log(`  mode=${pendant.mode}  deplacement=(${dx.toFixed(1)}, ${dz.toFixed(1)})`);
+
+      // On mesure le deplacement A L'ECRAN, pas dans le monde. Verifier que le
+      // joueur va vers "+X du monde" ne verifierait que mon hypothese sur
+      // l'orientation de la camera : c'est precisement ce trou qui a laisse
+      // passer une inversion gauche/droite jusque sur l'iPad de Raphael.
+      const ecran = await page.evaluate(([a, b]) => ({
+        avant: window.__test.projeter(a.x, a.z),
+        apres: window.__test.projeter(b.x, b.z),
+      }), [depart, pendant.joueur]);
+
+      const ex = ecran.apres.x - ecran.avant.x;
+      const ey = ecran.apres.y - ecran.avant.y;
+      console.log(`  mode=${pendant.mode}  deplacement a l'ecran = ` +
+                  `(${ex.toFixed(0)} px, ${ey.toFixed(0)} px)  ` +
+                  `(attendu : vers la droite et vers le haut)`);
 
       expect(pendant.mode).toBe('tactile');
-      expect(dx).toBeGreaterThan(1);   // vers la droite de l'ecran
-      expect(dz).toBeGreaterThan(1);   // vers le fond de l'ecran
+      // Pouce tire en HAUT a DROITE : le personnage doit aller a droite...
+      expect(ex).toBeGreaterThan(20);
+      // ... et vers le haut de l'ecran (y diminue vers le haut).
+      expect(ey).toBeLessThan(-20);
 
       // On leve le doigt : il doit s'arreter net. Pas de bascule au tactile.
       await page.evaluate(() => {

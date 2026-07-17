@@ -45,11 +45,21 @@ export function brancherPiloteAuto({ jeu, commandes, ui, sons, camera }) {
 
     const ex = but.position.x - jeu.joueur.position.x;
     const ez = but.position.z - jeu.joueur.position.z;
+
+    // Le but est dans le repere du MONDE, les fleches dans celui de l'ECRAN :
+    // il faut projeter l'un sur l'autre. Ne pas le faire (et supposer que
+    // "ArrowRight = +X") etait un bug... qui annulait exactement celui des
+    // commandes : le robot jouait juste pendant que l'ecran etait en miroir,
+    // et le score ne revelait donc rien. D'ou le repere, deduit de la camera.
+    const repere = commandes._test.repereEcran();
+    const sx = ex * repere.droite.x + ez * repere.droite.z;
+    const sy = ex * repere.fond.x + ez * repere.fond.z;
+
     const fleches = [];
-    if (ex > 0.25) fleches.push('ArrowRight');
-    if (ex < -0.25) fleches.push('ArrowLeft');
-    if (ez > 0.25) fleches.push('ArrowUp');
-    if (ez < -0.25) fleches.push('ArrowDown');
+    if (sx > 0.25) fleches.push('ArrowRight');
+    if (sx < -0.25) fleches.push('ArrowLeft');
+    if (sy > 0.25) fleches.push('ArrowUp');
+    if (sy < -0.25) fleches.push('ArrowDown');
     commandes._test.forcerFleches(fleches);
   }
 
@@ -110,6 +120,25 @@ export function brancherPiloteAuto({ jeu, commandes, ui, sons, camera }) {
     },
     ouverture: () => +camera.fov.toFixed(2),
     rapport: () => +camera.aspect.toFixed(3),
+
+    /**
+     * Projette un point du monde en pixels d'ecran.
+     *
+     * C'est LA mesure qui manquait : verifier que le joueur va vers "+X du
+     * monde" ne verifie que ma propre hypothese sur l'orientation de la camera.
+     * En projetant deux positions avec la MEME camera, on obtient le
+     * deplacement tel qu'il apparait, et c'est l'ecran que l'enfant regarde.
+     * (On projette deux points plutot que de suivre le joueur a l'ecran : la
+     * camera l'accompagne, il reste donc toujours au centre.)
+     */
+    projeter: (x, z) => {
+      const p = new THREE.Vector3(x, 0, z).project(camera);
+      return {
+        x: +((p.x * 0.5 + 0.5) * window.innerWidth).toFixed(1),
+        y: +((-p.y * 0.5 + 0.5) * window.innerHeight).toFixed(1),
+      };
+    },
+    repereEcran: () => commandes._test.repereEcran(),
   };
 
   // Le pilote fonce sur le cristal et le ramasse en moins d'une seconde : toute
