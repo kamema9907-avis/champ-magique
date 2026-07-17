@@ -1,0 +1,158 @@
+# La Récolte du Champ Magique — version web (iPad et PC)
+
+Portage en Three.js du jeu Python de [`../jeux_1`](../jeux_1), pour qu'il tourne
+sur l'iPad de Raphaël. Une page web : pas d'App Store, pas d'installation.
+
+60 secondes pour récolter un maximum de plantes en évitant les Rôdeurs.
+
+## Démarrer
+
+```bash
+npm install
+npm run dev
+```
+
+Puis ouvrir l'adresse affichée.
+
+### Jouer sur l'iPad (en Wi-Fi local, pour tester)
+
+`npm run dev` affiche aussi une adresse **Network** du genre `http://192.168.1.x:5173`.
+Tape-la dans Safari sur l'iPad, en étant sur le même Wi-Fi. Le PC doit rester allumé.
+
+C'est fait pour tester. Pour de vrai, voir « Publier » plus bas.
+
+## Comment jouer
+
+- **Sur iPad** : pose ton pouce **n'importe où** et fais-le glisser. Le personnage
+  marche dans cette direction. Plus tu t'éloignes de ton point de départ, plus il
+  va vite, jusqu'au bord de l'anneau. Tu lèves le doigt, il s'arrête.
+- **Sur PC** : les **flèches**, ou un **clic** pour marcher vers le curseur (et un
+  autre clic pour s'arrêter). Le rond au sol est vert quand il marche, gris sinon.
+
+La récolte est **automatique** au contact.
+
+Le jeu détecte tout seul : un doigt bascule en mode tactile, une souris ou une
+flèche revient en mode PC.
+
+### Les plantes
+
+| Plante | Couleur | Points |
+|---|---|---|
+| Mousse-bleue | bleu | 1 |
+| Épi doré | jaune | 3 |
+| Trompette pourpre | violet | 5 |
+| Étoile-de-feu | orange | 10 |
+| Cristal-lune | cyan lumineux | 25, et seulement 8 secondes |
+
+### Les profils
+
+Trois joueurs (**Raphaël, Papi, Invité**), chacun avec **son propre record**,
+affichés côte à côte sur l'écran de départ. Personne n'écrase le score de
+personne, et battre son papi est une motivation redoutable.
+
+- Le dernier joueur est mémorisé : jouer dix parties d'affilée ne demande aucun clic de plus.
+- **Appui long de 2 secondes** sur un nom : remet à zéro **ce joueur seulement**.
+- Les records sont dans le `localStorage`, donc **propres à chaque appareil**. Le
+  record du PC et celui de l'iPad sont séparés (les partager exigerait un serveur).
+  Ils disparaissent si on efface les données de Safari, et ne survivent pas à la
+  navigation privée.
+
+Pour changer les noms : la constante `JOUEURS` dans [`src/reglages.js`](src/reglages.js).
+
+## Régler la difficulté
+
+Tout est dans [`src/reglages.js`](src/reglages.js). **Ces chiffres viennent de
+`jeux_1` où ils ont été MESURÉS, pas devinés.** Ne pas les changer sans mesurer
+à nouveau (`npm test` donne le score du pilote automatique).
+
+| Réglage | Effet |
+|---|---|
+| `VITESSE_ENNEMI` | 65% du joueur. **Ne jamais dépasser 100%** : les Rôdeurs deviendraient inévitables. |
+| `NB_PLANTES` | 120. En dessous de 80, le champ paraît vide. |
+| `RAYON_RECOLTE` | 1.3 m. Augmenter si c'est trop dur. |
+| `RAYON_JOYSTICK` | 70 px : écart du pouce donnant la vitesse maximale. Baisser le rend plus nerveux. |
+| `ZONE_MORTE_JOYSTICK` | 8 px : en dessous, on ne bouge pas. Monter si le personnage part tout seul. |
+
+## Vérifier
+
+```bash
+npm test                      # tout
+npx playwright test --project=pc      # format 16:9
+npx playwright test --project=ipad    # format 4:3
+```
+
+Les tests font jouer une **partie complète en pilote automatique**, prennent des
+captures dans `tests/captures/`, et vérifient :
+
+- que la boucle tourne 60 secondes sans erreur ;
+- que **le nombre de pas est exactement 3600** (voir « pas fixe » plus bas) ;
+- que le score reste dans un ordre de grandeur crédible ;
+- que le **joystick** fait marcher le personnage dans la bonne direction, qu'il
+  s'arrête quand on lève le doigt, et qu'un **deuxième doigt ne vole pas le contrôle** ;
+- que la **largeur de champ visible est identique en 16:9 et en 4:3**.
+
+`?test` expose les crochets de test, `?test&auto` fait en plus **jouer** le robot.
+Les deux sont séparés parce que le pilote force les flèches à chaque pas : sans
+cette séparation, il fausserait tout test des commandes.
+
+**Ce que les tests ne peuvent pas faire :** Chromium n'est pas Safari, et aucun
+test ne dira si le pouce de Raphaël tombe au bon endroit. L'essai sur le vrai
+iPad reste indispensable.
+
+## Publier sur GitHub Pages
+
+```bash
+npm run build     # produit dist/
+```
+
+Le dépôt contient un workflow ([`.github/workflows/pages.yml`](.github/workflows/pages.yml))
+qui construit et publie automatiquement à chaque `git push` sur `main`.
+
+Une fois publié, sur l'iPad : ouvrir l'adresse dans Safari, puis **Partager →
+Ajouter à l'écran d'accueil**. Le jeu obtient une icône et se lance en plein
+écran, sans la barre de Safari.
+
+## Décisions de conception qui méritent une explication
+
+- **Pas de simulation fixe (1/60 s), découplé de l'affichage.** Sans ça, sur une
+  machine lente le joueur avancerait de presque un mètre d'un coup et
+  **traverserait les plantes sans les toucher**. Le test le vérifie : 3600 pas
+  exactement, que la machine tourne à 60 ou à 10 images/seconde.
+- **L'ouverture de la caméra s'adapte à la forme de l'écran** pour garder une
+  **largeur de champ constante** (35,64 m, mesuré). Un iPad est en 4:3, un PC en
+  16:9 : à ouverture fixe, l'iPad aurait vu le champ plus étroit, les Rôdeurs
+  seraient arrivés plus tard, et le jeu aurait été plus dur sans que personne
+  comprenne pourquoi. L'iPad voit donc plus haut et plus bas, mais autant sur les
+  côtés — et c'est par les côtés qu'arrive le danger.
+- **Joystick flottant, pas fixe.** Un joystick dessiné à un endroit fixe oblige
+  l'enfant à quitter l'action des yeux pour retrouver le bouton.
+- **Le premier doigt commande, et lui seul.** Un pouce oublié sur le bord de
+  l'iPad ne doit jamais figer le personnage.
+- **Pas de bascule au tactile.** Doigt posé = je marche, doigt levé = je m'arrête :
+  c'est explicite par nature. La bascule au clic ne sert que la souris, où il
+  fallait bien un moyen de s'arrêter sans tenir le bouton.
+- **L'interface est en HTML, pas en 3D.** Texte net à toute densité d'écran,
+  accents corrects, mise en page adaptative gratuite.
+- **Le son se débloque au premier geste.** iOS interdit à une page de faire du
+  bruit avant. L'écran de départ en demande un de toute façon.
+- **Le sol (120 m) déborde largement l'aire de jeu (50 m).** Sinon, quand le
+  joueur longe le bord, la caméra placée derrière lui filme au-delà du plan et
+  laisse voir le vide. Bug constaté en jouant à la version Python.
+- **Géométries et matériaux partagés, arbres fusionnés.** L'iPad de 2022 n'a pas
+  besoin de plus ; on optimisera si une mesure le réclame, pas avant.
+
+## Les fichiers
+
+| Fichier | Rôle |
+|---|---|
+| [`src/reglages.js`](src/reglages.js) | **Tous les chiffres.** Le seul fichier à toucher pour équilibrer. |
+| [`src/monde.js`](src/monde.js) | Sol, arbres, lumières, caméra. |
+| [`src/plantes.js`](src/plantes.js) | Les cinq plantes. |
+| [`src/personnages.js`](src/personnages.js) | Le fermier et les Rôdeurs. |
+| [`src/commandes.js`](src/commandes.js) | Joystick tactile, souris, flèches. |
+| [`src/jeu.js`](src/jeu.js) | L'état et la boucle de partie. |
+| [`src/interface.js`](src/interface.js) | HUD, écrans, profils. |
+| [`src/sons.js`](src/sons.js) | Chargement et déblocage iOS. |
+| [`src/pilote-auto.js`](src/pilote-auto.js) | Le robot qui joue tout seul (tests). |
+| [`scripts/icone.js`](scripts/icone.js) | Dessine les icônes (`node scripts/icone.js`). |
+| `public/sons/` | Les WAV, **synthétisés par `jeux_1/sons.py`** et copiés tels quels. |

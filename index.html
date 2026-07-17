@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <!-- viewport-fit=cover : on dessine sous les coins arrondis et la barre d'accueil.
+       user-scalable=no + maximum-scale=1 : sans ca, un double-tap du pouce zoome
+       la page en plein jeu, ce qui est vecu comme un bug. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#8fd3ff">
+  <!-- Permet le lancement en plein ecran depuis "Ajouter a l'ecran d'accueil" -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Champ Magique">
+  <link rel="apple-touch-icon" href="./icone-180.png">
+  <link rel="manifest" href="./manifeste.webmanifest">
+  <title>La Récolte du Champ Magique</title>
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <!-- Interface en HTML plutot qu'en 3D : le texte reste net a toute densite
+       d'ecran, les accents fonctionnent, et la mise en page s'adapte toute seule. -->
+  <div id="interface">
+    <div id="hud">
+      <div id="score">Score : 0</div>
+      <div id="record">Record : 0</div>
+      <div id="chrono">60</div>
+    </div>
+
+    <!-- Les "+5" qui s'envolent : positionnes en projetant le point 3D a l'ecran -->
+    <div id="volants"></div>
+
+    <div id="panneau">
+      <div id="panneau-contenu">
+        <h1 id="titre">LA RÉCOLTE DU CHAMP MAGIQUE</h1>
+        <div id="joueurs-bloc">
+          <p class="etiquette">Qui joue ?</p>
+          <div id="joueurs"></div>
+          <p class="astuce">Appui long de 2 secondes sur un nom pour remettre son record à zéro</p>
+        </div>
+        <div id="corps"></div>
+        <button id="action">Appuie pour commencer</button>
+      </div>
+    </div>
+
+    <div id="tourne">
+      <div>
+        <div id="tourne-icone">⟳</div>
+        <p>Tourne ton iPad<br>pour jouer en paysage</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

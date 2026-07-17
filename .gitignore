@@ -1,0 +1,10 @@
+node_modules/
+dist/
+
+# Sorties de test : regenerees a chaque `npm test`, aucun interet a les versionner.
+test-results/
+playwright-report/
+tests/captures/
+
+.DS_Store
+*.log

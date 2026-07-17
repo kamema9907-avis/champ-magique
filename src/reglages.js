@@ -1,0 +1,93 @@
+/**
+ * Tous les chiffres du jeu. C'est le seul fichier a toucher pour equilibrer.
+ *
+ * Ces valeurs viennent de la version Python (jeux_1) ou elles ont ete MESUREES
+ * en faisant jouer un pilote automatique, pas devinees. Elles sont notre point
+ * de reference : si le jeu se comporte differemment ici, c'est le portage qui
+ * est en cause, pas l'equilibrage. Ne pas les modifier sans mesurer a nouveau.
+ */
+
+export const DUREE_PARTIE = 60.0;
+
+export const TAILLE_CHAMP = 50.0;   // aire de jeu, delimitee par la cloture d'arbres
+export const TAILLE_SOL = 120.0;    // le sol deborde : on ne voit jamais le bord du monde
+export const DEMI_CHAMP = TAILLE_CHAMP / 2;
+export const MARGE_JOUEUR = 1.5;    // le mur invisible
+export const MARGE_PLANTE = 2.5;
+
+export const VITESSE_JOUEUR = 9.0;
+export const VITESSE_ENNEMI = VITESSE_JOUEUR * 0.65;  // 65% : on peut TOUJOURS s'echapper
+export const RAYON_DETECTION = 8.0;
+export const RAYON_ABANDON = 12.0;
+export const RAYON_RECOLTE = 1.3;
+export const RAYON_CONTACT_ENNEMI = 1.3;
+
+export const NB_PLANTES = 120;
+export const INVINCIBILITE = 1.5;
+export const MALUS_POURCENT = 0.10;
+export const MALUS_MINIMUM = 5;
+
+export const CRISTAL_DUREE_VIE = 8.0;
+export const CRISTAL_PREMIER_DELAI = 8.0;
+export const CRISTAL_DELAI = [9.0, 14.0];
+export const CRISTAL_DISTANCE_MINI = 15.0;
+
+export const TEMPS_DEUXIEME_ENNEMI = 30.0;  // secondes restantes
+
+// --- Camera ---------------------------------------------------------------
+// La camera suit le joueur mais ne tourne JAMAIS : c'est ce qui rend les
+// commandes "absolues" (haut = vers le fond de l'ecran, toujours).
+// y / z respectent tan(50 deg), donc elle vise exactement le joueur.
+export const DECALAGE_CAMERA = { x: 0, y: 20, z: -16.78 };
+export const SUIVI_CAMERA = 7.0;    // vitesse de rattrapage de la camera
+
+// Sur PC (16:9) la version Python utilisait 42 deg d'ouverture VERTICALE, ce qui
+// donne cette ouverture HORIZONTALE. On la garde constante quel que soit l'ecran :
+// un iPad (4:3) verra donc plus haut et plus bas, mais AUTANT sur les cotes.
+// C'est vital : les Rodeurs arrivent par les cotes. A ouverture verticale fixe,
+// l'iPad verrait le champ plus etroit et le jeu deviendrait plus dur sans raison.
+export const OUVERTURE_HORIZONTALE = 68.64;  // degres
+
+// --- Commandes ------------------------------------------------------------
+// Souris : le curseur agit comme un manche de joystick (la camera suivant le
+// joueur, le point vise s'eloigne avec lui).
+export const ZONE_MORTE_SOURIS = 1.2;   // metres
+export const RAMPE_SOURIS = 3.0;        // metres : pleine vitesse au-dela
+
+// Joystick tactile flottant : il nait la ou le pouce se pose.
+export const ZONE_MORTE_JOYSTICK = 8;   // pixels : en dessous, on ne bouge pas
+export const RAYON_JOYSTICK = 70;       // pixels : pleine vitesse au bord de l'anneau
+
+// --- Simulation -----------------------------------------------------------
+// Pas fixe, decouple de l'affichage. Sans cela, sur une machine lente le joueur
+// avancerait de presque un metre d'un coup et traverserait les plantes sans les
+// toucher. Garantit un comportement identique a 60 i/s sur iPad et a 10 i/s
+// dans les tests automatises.
+export const PAS_SIMULATION = 1 / 60;
+export const PAS_MAX_PAR_IMAGE = 5;     // evite la spirale de la mort si ca rame
+
+// --- Couleurs -------------------------------------------------------------
+export const COULEURS = {
+  ciel: 0x8fd3ff,
+  sol: 0x5aa02c,
+  tige: 0x2f7d32,
+  brun: 0x6b4423,
+  feuille: 0x3d8b37,
+  mousse: 0x3d7bff,
+  epi: 0xffd21f,
+  violet: 0xa339d6,
+  orange: 0xff6a00,
+  cyan: 0x3df2ff,
+  ennemi: 0xd81f1f,
+  pique: 0xff9b3d,
+  peau: 0xf0b98a,
+  salopette: 0x2a4fd6,
+  paille: 0xe8c56a,
+  degat: 0xff4444,
+};
+
+// --- Profils --------------------------------------------------------------
+// Modifiables librement : c'est la seule ligne a changer pour renommer.
+export const JOUEURS = ['Raphaël', 'Papi', 'Invité'];
+export const CLE_STOCKAGE = 'champ-magique.records';
+export const CLE_DERNIER_JOUEUR = 'champ-magique.dernier-joueur';

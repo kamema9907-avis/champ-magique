@@ -1,0 +1,14 @@
+{
+  "name": "La Récolte du Champ Magique",
+  "short_name": "Champ Magique",
+  "description": "Récolte un maximum de plantes en 60 secondes en évitant les Rôdeurs.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#10141a",
+  "theme_color": "#8fd3ff",
+  "icons": [
+    { "src": "./icone-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
