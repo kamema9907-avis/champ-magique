@@ -1,9 +1,15 @@
 # La Récolte du Champ Magique — version web (iPad et PC)
 
+## ▶ Jouer : **https://kamema9907-avis.github.io/champ-magique/**
+
 Portage en Three.js du jeu Python de [`../jeux_1`](../jeux_1), pour qu'il tourne
 sur l'iPad de Raphaël. Une page web : pas d'App Store, pas d'installation.
 
 60 secondes pour récolter un maximum de plantes en évitant les Rôdeurs.
+
+**Sur l'iPad, pour en faire une vraie app :** ouvrir l'adresse dans Safari, puis
+**Partager → Ajouter à l'écran d'accueil**. Le jeu obtient une icône et se lance
+en plein écran, sans la barre de Safari.
 
 ## Démarrer
 
@@ -124,12 +130,17 @@ iPad reste indispensable.
 npm run build     # produit dist/
 ```
 
-Le dépôt contient un workflow ([`.github/workflows/pages.yml`](.github/workflows/pages.yml))
-qui construit et publie automatiquement à chaque `git push` sur `main`.
+**C'est déjà fait**, et il n'y a plus rien à configurer : un `git push` sur `main`
+suffit désormais à mettre le jeu à jour. Le workflow
+([`.github/workflows/pages.yml`](.github/workflows/pages.yml)) construit et publie
+tout seul, en une trentaine de secondes.
 
-Une fois publié, sur l'iPad : ouvrir l'adresse dans Safari, puis **Partager →
-Ajouter à l'écran d'accueil**. Le jeu obtient une icône et se lance en plein
-écran, sans la barre de Safari.
+Suivre une publication : `gh run list` puis `gh run view <id> --log-failed`.
+
+Piège rencontré la première fois : le workflow échoue avec
+`Get Pages site failed... Not Found` tant que Pages n'est pas activé sur le dépôt.
+C'est fait (`build_type: workflow`), mais si tu recrées un jour un dépôt, il faut
+activer Pages **avant** le premier push, ou relancer le workflow ensuite.
 
 ## Décisions de conception qui méritent une explication
 
