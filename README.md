@@ -16,10 +16,29 @@ Puis ouvrir l'adresse affichée.
 
 ### Jouer sur l'iPad (en Wi-Fi local, pour tester)
 
-`npm run dev` affiche aussi une adresse **Network** du genre `http://192.168.1.x:5173`.
-Tape-la dans Safari sur l'iPad, en étant sur le même Wi-Fi. Le PC doit rester allumé.
+`npm run dev` affiche une adresse **Network** en **`https://`** du genre
+`https://192.168.2.140:5173`. Tape-la dans Safari sur l'iPad, sur le même Wi-Fi,
+PC allumé.
 
-C'est fait pour tester. Pour de vrai, voir « Publier » plus bas.
+**Le serveur est en HTTPS, et ce n'est pas un caprice.** Safari (iOS) et Chrome
+refusent désormais une adresse en `http://`, même vers une IP du réseau local :
+ils forcent HTTPS avant même d'essayer. Symptômes si on l'oublie :
+
+- sur PC : « la connexion n'est pas sécurisée » ;
+- sur iPad : « une connexion sécurisée au serveur n'a pu être établie ».
+
+Ce message est trompeur : il ne veut **pas** dire que l'iPad ne joint pas le PC.
+Au contraire, il prouve qu'il l'a joint, et que seule la poignée de main TLS a
+échoué. (Si le réseau était en cause, Safari dirait « impossible de se connecter
+au serveur ».)
+
+D'où [`@vitejs/plugin-basic-ssl`](https://github.com/vitejs/vite-plugin-basic-ssl)
+dans [`vite.config.js`](vite.config.js), qui fabrique un certificat auto-signé.
+Comme personne ne l'a signé, **Safari affiche un avertissement au premier accès** :
+**Afficher les détails → Visiter ce site web**. Une seule fois par appareil.
+
+Tout ceci ne concerne **que** le développement. La version publiée sur GitHub
+Pages a un vrai certificat et s'ouvre sans aucun avertissement.
 
 ## Comment jouer
 

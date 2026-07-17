@@ -6,7 +6,9 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: [['list']],
-  use: { baseURL: 'http://localhost:5173' },
+  // Le serveur de developpement est en HTTPS avec un certificat auto-signe (les
+  // navigateurs refusent le http:// vers une IP locale), d'ou ignoreHTTPSErrors.
+  use: { baseURL: 'https://localhost:5173', ignoreHTTPSErrors: true },
   projects: [
     // Deux formats, parce que c'est le coeur d'une decision de conception :
     // l'ouverture de camera s'adapte pour garder la MEME largeur de champ
@@ -17,7 +19,8 @@ export default defineConfig({
   // Vite est lance automatiquement pour les tests, et reutilise s'il tourne deja.
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:5173',
+    url: 'https://localhost:5173',
+    ignoreHTTPSErrors: true,
     reuseExistingServer: true,
     timeout: 60_000,
   },
