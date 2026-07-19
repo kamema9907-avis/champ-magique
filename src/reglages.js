@@ -32,7 +32,16 @@ export const CRISTAL_PREMIER_DELAI = 8.0;
 export const CRISTAL_DELAI = [9.0, 14.0];
 export const CRISTAL_DISTANCE_MINI = 15.0;
 
-export const TEMPS_DEUXIEME_ENNEMI = 30.0;  // secondes restantes
+// Apparition des Rodeurs, en secondes ECOULEES depuis le debut de la partie.
+// Un tableau par niveau de difficulte. Le Rodeur a 0 s est toujours la; chaque
+// niveau ajoute des vagues. Le niveau 1 reproduit l'original (un 2e Rodeur a
+// 30 s, soit 30 s restantes sur une partie de 60 s).
+export const NIVEAUX_APPARITION = [
+  [0, 30],                    // Niveau 1
+  [0, 20, 40],                // Niveau 2
+  [0, 10, 20, 30, 40, 50],    // Niveau 3
+];
+export const NIVEAU_DEFAUT = 1;
 
 // --- Camera ---------------------------------------------------------------
 // La camera suit le joueur mais ne tourne JAMAIS : c'est ce qui rend les
@@ -91,3 +100,4 @@ export const COULEURS = {
 export const JOUEURS = ['Raphaël', 'Papi', 'Invité'];
 export const CLE_STOCKAGE = 'champ-magique.records';
 export const CLE_DERNIER_JOUEUR = 'champ-magique.dernier-joueur';
+export const CLE_NIVEAU = 'champ-magique.niveau';

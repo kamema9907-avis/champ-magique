@@ -84,6 +84,21 @@ personne, et battre son papi est une motivation redoutable.
 
 Pour changer les noms : la constante `JOUEURS` dans [`src/reglages.js`](src/reglages.js).
 
+### Les niveaux
+
+Trois boutons sur l'écran de départ, **Facile / Moyen / Difficile**, changent le
+rythme d'arrivée des Rôdeurs (la partie dure toujours 60 secondes) :
+
+| Niveau | Arrivée des Rôdeurs | Rôdeurs en fin de partie |
+|---|---|---|
+| Facile | 0 s, puis 30 s | 2 |
+| Moyen | 0, 20, 40 s | 3 |
+| Difficile | toutes les 10 s | 6 |
+
+Le niveau choisi est mémorisé dans le `localStorage`, comme le dernier joueur.
+Les calendriers d'apparition sont la constante `NIVEAUX_APPARITION` dans
+[`src/reglages.js`](src/reglages.js) : ajouter un niveau ne demande qu'une ligne.
+
 ## Régler la difficulté
 
 Tout est dans [`src/reglages.js`](src/reglages.js). **Ces chiffres viennent de

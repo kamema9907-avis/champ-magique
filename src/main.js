@@ -30,7 +30,7 @@ function demarrer() {
   // Le son doit etre debloque DANS le geste de l'utilisateur : c'est la seule
   // fenetre ou iOS l'autorise. Notre bouton "Commencer" en est un.
   sons.deverrouiller();
-  jeu.demarrerPartie();
+  jeu.demarrerPartie(ui.niveau);
 }
 
 function redimensionner() {

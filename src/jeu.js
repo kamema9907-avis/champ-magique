@@ -36,7 +36,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui }) {
   let invincibleRestant = 0;
   let prochainTic = 10;
   let cycleMarche = 0;
-  let deuxiemeEnnemiApparu = false;
+  let apparitions = [];         // temps (ecoule) des vagues de Rodeurs a venir
   let horloge = 0;              // temps de jeu accumule, pour les animations
   let crochetCristal = null;    // utilise seulement par le pilote automatique
   let distanceCristal = R.CRISTAL_DISTANCE_MINI;
@@ -128,7 +128,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui }) {
     ui.volant(p.x, p.y, perte > 0 ? `-${perte}` : 'Aïe !', '#ff5555');
   }
 
-  function demarrerPartie() {
+  function demarrerPartie(niveau = R.NIVEAU_DEFAUT) {
     for (const p of plantes) scene.remove(p);
     for (const e of ennemis) scene.remove(e);
     plantes = [];
@@ -140,7 +140,6 @@ export function creerJeu({ scene, camera, commandes, sons, ui }) {
     invincibleRestant = 0;
     delaiCristal = R.CRISTAL_PREMIER_DELAI;
     prochainTic = 10;
-    deuxiemeEnnemiApparu = false;
     cycleMarche = 0;
     compteurs = { recoltes: 0, degats: 0, pointsPerdus: 0, cristaux: 0, pas: 0 };
 
@@ -150,7 +149,15 @@ export function creerJeu({ scene, camera, commandes, sons, ui }) {
     camera.position.set(R.DECALAGE_CAMERA.x, R.DECALAGE_CAMERA.y, R.DECALAGE_CAMERA.z);
 
     for (let i = 0; i < R.NB_PLANTES; i++) creerPlante();
-    creerEnnemi();
+
+    // Le calendrier des Rodeurs depend du niveau choisi. Les vagues a 0 s
+    // apparaissent tout de suite; les autres seront declenchees par le chrono.
+    const calendrier = R.NIVEAUX_APPARITION[niveau - 1] || R.NIVEAUX_APPARITION[0];
+    apparitions = [...calendrier];
+    while (apparitions.length && apparitions[0] <= 0) {
+      apparitions.shift();
+      creerEnnemi();
+    }
 
     commandes.reinitialiser();
     ui.cacherPanneau();
@@ -306,8 +313,10 @@ export function creerJeu({ scene, camera, commandes, sons, ui }) {
   function majChrono(dt) {
     tempsRestant -= dt;
 
-    if (!deuxiemeEnnemiApparu && tempsRestant <= R.TEMPS_DEUXIEME_ENNEMI) {
-      deuxiemeEnnemiApparu = true;
+    // Fait apparaitre chaque vague dont l'heure (en secondes ecoulees) est venue.
+    const ecoule = R.DUREE_PARTIE - tempsRestant;
+    while (apparitions.length && ecoule >= apparitions[0]) {
+      apparitions.shift();
       creerEnnemi();
     }
 

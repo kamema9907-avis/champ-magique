@@ -28,12 +28,19 @@ function sauverRecords(records) {
   try { localStorage.setItem(R.CLE_STOCKAGE, JSON.stringify(records)); } catch { /* ignore */ }
 }
 
+// Noms enfant-friendly des niveaux, dans l'ordre de R.NIVEAUX_APPARITION.
+const NOMS_NIVEAUX = ['Facile', 'Moyen', 'Difficile'];
+
 export function creerInterface({ surDemarrage }) {
   let records = chargerRecords();
   let joueur = localStorage.getItem(R.CLE_DERNIER_JOUEUR) || R.JOUEURS[0];
   if (!R.JOUEURS.includes(joueur)) joueur = R.JOUEURS[0];
 
+  let niveau = Number(localStorage.getItem(R.CLE_NIVEAU)) || R.NIVEAU_DEFAUT;
+  if (niveau < 1 || niveau > R.NIVEAUX_APPARITION.length) niveau = R.NIVEAU_DEFAUT;
+
   const boutons = new Map();
+  const boutonsNiveau = new Map();
 
   function dessinerJoueurs() {
     const conteneur = $('joueurs');
@@ -55,6 +62,27 @@ export function creerInterface({ surDemarrage }) {
     try { localStorage.setItem(R.CLE_DERNIER_JOUEUR, nom); } catch { /* ignore */ }
     for (const [autre, bouton] of boutons) bouton.classList.toggle('actif', autre === nom);
     majRecordHud();
+  }
+
+  function dessinerNiveaux() {
+    const conteneur = $('niveaux');
+    conteneur.innerHTML = '';
+    boutonsNiveau.clear();
+    for (let n = 1; n <= R.NIVEAUX_APPARITION.length; n++) {
+      const bouton = document.createElement('button');
+      bouton.className = 'niveau' + (n === niveau ? ' actif' : '');
+      const nom = NOMS_NIVEAUX[n - 1] || `Niveau ${n}`;
+      bouton.innerHTML = `<span class="numero">${n}</span><span class="libelle">${nom}</span>`;
+      bouton.addEventListener('click', () => choisirNiveau(n));
+      conteneur.appendChild(bouton);
+      boutonsNiveau.set(n, bouton);
+    }
+  }
+
+  function choisirNiveau(n) {
+    niveau = n;
+    try { localStorage.setItem(R.CLE_NIVEAU, String(n)); } catch { /* ignore */ }
+    for (const [autre, bouton] of boutonsNiveau) bouton.classList.toggle('actif', autre === n);
   }
 
   /** Appui long de 2 s : remet a zero CE joueur seulement. Discret, jamais par accident. */
@@ -108,6 +136,7 @@ export function creerInterface({ surDemarrage }) {
   return {
     get joueur() { return joueur; },
     get record() { return records[joueur]; },
+    get niveau() { return niveau; },
 
     afficherMenu() {
       $('titre').textContent = 'LA RÉCOLTE DU CHAMP MAGIQUE';
@@ -119,6 +148,7 @@ export function creerInterface({ surDemarrage }) {
       $('score').textContent = 'Score : 0';
       $('chrono').textContent = '60';
       dessinerJoueurs();
+      dessinerNiveaux();
       majRecordHud();
     },
 
@@ -137,6 +167,7 @@ export function creerInterface({ surDemarrage }) {
       $('joueurs-bloc').style.display = '';
       $('panneau').style.display = '';
       dessinerJoueurs();
+      dessinerNiveaux();
       majRecordHud();
       return nouveau;
     },

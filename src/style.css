@@ -140,6 +140,29 @@ html, body {
 .joueur.efface-fait { border-color: #ff6b6b; }
 @keyframes remplir { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
+/* --- Niveaux ------------------------------------------------------------ */
+
+#niveau-bloc { margin-bottom: 2vh; }
+#niveaux { display: flex; gap: .7em; justify-content: center; flex-wrap: wrap; }
+
+.niveau {
+  display: flex; flex-direction: column; align-items: center; gap: .15em;
+  min-width: 5.6em;
+  padding: .55em 1em;
+  border: 2px solid #3c4a5a;
+  border-radius: .7em;
+  background: #1a222c;
+  color: #b9c7d6;
+  font: inherit;
+  font-size: clamp(12px, 1.5vw, 16px);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.niveau .numero { font-weight: 700; font-size: 1.15em; }
+.niveau .libelle { font-size: .8em; color: #7e8c9c; }
+.niveau.actif { border-color: #7dff9b; background: #16301f; color: #fff; }
+.niveau.actif .libelle { color: #7dff9b; }
+
 #action {
   padding: .7em 1.8em;
   border: none;
