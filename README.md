@@ -101,23 +101,32 @@ le dernier joueur. Les calendriers d'apparition (`NIVEAUX_APPARITION`) et les
 facteurs de vitesse (`VITESSE_ENNEMI_NIVEAU`) sont dans
 [`src/reglages.js`](src/reglages.js).
 
-### Le tableau 2 : Les Rochers
+### Les tableaux à débloquer
 
-Un **second tableau**, débloqué en récompense, où de petits rochers servent
-d'obstacles à contourner (joueur **et** Rôdeurs sont bloqués et glissent le long).
-Le sol et le ciel sont re-teintés pour signaler un autre lieu.
+Au-delà du **Champ** (tableau 1), trois tableaux se débloquent en récompense,
+chacun avec son décor (sol texturé re-teinté, ciel et arbres de couleurs
+différentes) et ses obstacles à contourner. Joueur **et** Rôdeurs sont bloqués
+par les obstacles et glissent le long.
 
-- **Déverrouillage** : quand le record du profil au **tableau 1 atteint 560**
-  (`SEUIL_TABLEAU_2`). C'est **par profil** : chacun le mérite de son côté. Le
-  déblocage n'est pas un drapeau stocké, il se **déduit du record** : remettre le
-  record à zéro (appui long) re-verrouille automatiquement le tableau 2.
-- **Trois niveaux aussi**, avec le même rythme de Rôdeurs que le tableau 1, mais
-  un nombre de rochers croissant : Facile **4**, Moyen **8**, Difficile **12**
-  (`NB_ROCHERS`). Les rochers sont placés au hasard à chaque partie, loin du
-  départ et espacés ; plantes et cristaux les évitent.
-- **Records séparés** : chaque profil a un record tableau 1 (`T1`) et tableau 2
-  (`T2`). L'écran de départ affiche un cadenas tant que le tableau 2 est
-  verrouillé, puis les deux scores une fois débloqué.
+| Tableau | Décor | Obstacles |
+|---|---|---|
+| 1 · Le Champ | prairie verte (sol lisse) | aucun |
+| 2 · Les Rochers | aride, ciel chaud, arbres orangés | rochers |
+| 3 · Forêt Gelée | neige, ciel froid, arbres givrés | blocs de glace |
+| 4 · Terres de Feu | sol volcanique, ciel rouge, arbres carbonisés | rochers de lave |
+
+- **Déverrouillage en chaîne, par profil** : le tableau 2 s'ouvre quand le record
+  du **tableau 1** atteint le seuil ; le 3 via le **tableau 2** ; le 4 via le
+  **tableau 3** (`SEUIL_DEBLOCAGE`, 560 partout au départ). Ce n'est pas un drapeau
+  stocké mais une **déduction du record** : remettre les records à zéro (appui
+  long) re-verrouille toute la chaîne.
+- **Trois niveaux** partout, avec le même rythme de Rôdeurs et un nombre
+  d'obstacles croissant : Facile **4**, Moyen **8**, Difficile **12**
+  (`NB_ROCHERS`). Placés au hasard à chaque partie, loin du départ et espacés ;
+  plantes et cristaux les évitent.
+- **Un record par tableau et par profil** (`t1`..`t4`). L'écran de départ montre
+  le record du tableau **sélectionné**, et un cadenas sur chaque tableau encore
+  verrouillé. Franchir un seuil affiche « 🎉 *nom du tableau* débloqué ! ».
 
 ## Régler la difficulté
 
@@ -132,7 +141,7 @@ Tout est dans [`src/reglages.js`](src/reglages.js). **Ces chiffres viennent de
 | `RAYON_RECOLTE` | 1.3 m. Augmenter si c'est trop dur. |
 | `RAYON_JOYSTICK` | 70 px : écart du pouce donnant la vitesse maximale. Baisser le rend plus nerveux. |
 | `ZONE_MORTE_JOYSTICK` | 8 px : en dessous, on ne bouge pas. Monter si le personnage part tout seul. |
-| `SEUIL_TABLEAU_2` | 560 : record du tableau 1 pour débloquer les Rochers. Baisser si c'est trop dur à atteindre. |
+| `SEUIL_DEBLOCAGE` | `[560, 560, 560]` : score à atteindre sur un tableau pour débloquer le suivant. Baisser si c'est trop dur. |
 | `NB_ROCHERS` | `[4, 8, 12]` par niveau. Au-delà, le champ sature et des passages se ferment. |
 | `ROCHER_RAYON_COLLISION` | 1.3 m : à quelle distance on bute sur un rocher. |
 
@@ -217,7 +226,7 @@ activer Pages **avant** le premier push, ou relancer le workflow ensuite.
 | [`src/monde.js`](src/monde.js) | Sol, arbres, lumières, caméra. |
 | [`src/plantes.js`](src/plantes.js) | Les cinq plantes. |
 | [`src/personnages.js`](src/personnages.js) | Le fermier et les Rôdeurs. |
-| [`src/rochers.js`](src/rochers.js) | Les rochers-obstacles du tableau 2. |
+| [`src/rochers.js`](src/rochers.js) | Les obstacles des tableaux 2 à 4 (rochers, glace, lave). |
 | [`src/commandes.js`](src/commandes.js) | Joystick tactile, souris, flèches. |
 | [`src/jeu.js`](src/jeu.js) | L'état et la boucle de partie. |
 | [`src/interface.js`](src/interface.js) | HUD, écrans, profils. |
