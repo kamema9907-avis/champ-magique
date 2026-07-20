@@ -61,51 +61,6 @@ export function creerCommandes({ canvas, camera, scene }) {
   const pointSol = new THREE.Vector3();
   let pointSolValide = false;
 
-  // --- Manette de TV (pave directionnel) ----------------------------------
-  // Une telecommande de TV (ex. Firestick dans Silk) n'est ni un gamepad ni des
-  // fleches : son pave deplace un CURSEUR, par a-coups purement horizontaux ou
-  // verticaux. On le reconnait a cette signature (mouvements "cardinaux"), et on
-  // passe alors a un controle base sur le MOUVEMENT du curseur, pas sa position :
-  // pousser le pad = avancer dans ce sens, relacher = s'arreter. La position du
-  // curseur devient sans importance (fini le personnage colle aux arbres).
-  // Un vrai geste de souris (diagonal) desactive le mode : le PC n'est pas gene.
-  let manette = false;
-  let confianceManette = 0;
-  let curseurPrec = null;                          // derniere position, pour le delta
-  const mvtCurseur = { dx: 0, dy: 0, t: -1e9 };    // direction ecran du dernier mouvement
-
-  // Verrouillage du pointeur (Pointer Lock) : detache le curseur des bords de
-  // l'ecran, si bien que le pad continue d'envoyer des mouvements meme "au-dela"
-  // du bord (fini le curseur coince au bord qui fige le personnage), et le cache.
-  // On l'engage au demarrage de la partie et on le relache a la fin. S'il n'est
-  // pas supporte (incertain dans Silk), on garde le mode base sur clientX/Y.
-  let verrouille = false;
-
-  function activerManette() {
-    manette = true;
-    document.body.style.cursor = 'none';
-  }
-  function desactiverManette() {
-    manette = false;
-    confianceManette = 0;
-    document.body.style.cursor = '';
-  }
-
-  function demanderVerrouillage() {
-    // Seulement pour une manette detectee : sur PC on ne capture pas la souris.
-    if (manette && !verrouille && canvas.requestPointerLock) {
-      try { canvas.requestPointerLock(); } catch { /* non supporte : on garde le repli */ }
-    }
-  }
-  function libererVerrouillage() {
-    if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
-  }
-  document.addEventListener('pointerlockchange', () => {
-    verrouille = document.pointerLockElement === canvas;
-    if (verrouille) activerManette();
-  });
-  document.addEventListener('pointerlockerror', () => { verrouille = false; });
-
   // Anneau pose au sol sous le curseur. Une commande a bascule n'est utilisable
   // que si son etat se voit : vert = il marche, gris = il est arrete.
   const curseur = new THREE.Mesh(
@@ -120,12 +75,10 @@ export function creerCommandes({ canvas, camera, scene }) {
     if (!sourisDansLaPage) { pointSolValide = false; return; }
     rayon.setFromCamera(souris, camera);
     pointSolValide = rayon.ray.intersectPlane(PLAN_SOL, pointSol) !== null;
-    // On borne la cible a l'aire de jeu. Sinon, sur un ecran ou le curseur peut
-    // pointer le ciel ou les arbres (typiquement une TV pilotee au pave
-    // directionnel, qui deplace un curseur), la cible tombe tres loin hors du
-    // champ : le personnage fonce vers le bord, bute sur le mur invisible et s'y
-    // colle jusqu'a ce qu'on ramene le curseur dans le champ. Bornee, la cible
-    // reste au pire sur le bord interieur : le personnage l'atteint et s'arrete.
+    // On borne la cible a l'aire de jeu. Sinon, en visant le ciel ou les arbres,
+    // la cible tombe tres loin hors du champ : le personnage fonce vers le bord,
+    // bute sur le mur invisible et s'y colle. Bornee, elle reste au pire sur le
+    // bord interieur : le personnage l'atteint et s'arrete.
     if (pointSolValide) {
       const limite = R.DEMI_CHAMP - R.MARGE_JOUEUR;
       pointSol.x = Math.min(limite, Math.max(-limite, pointSol.x));
@@ -144,13 +97,7 @@ export function creerCommandes({ canvas, camera, scene }) {
       return;
     }
     mode = 'pc';
-    if (e.button === 0) {
-      sourisActive = !sourisActive;   // bascule (mode souris PC)
-      // Si une manette a ete reconnue, la pression OK est un geste utilisateur
-      // valable pour engager le verrouillage du pointeur (repli si le demarrage
-      // ne l'a pas fait).
-      demanderVerrouillage();
-    }
+    if (e.button === 0) sourisActive = !sourisActive;   // bascule
   }
 
   function surPointerMove(e) {
@@ -162,31 +109,6 @@ export function creerCommandes({ canvas, camera, scene }) {
     sourisDansLaPage = true;
     souris.x = (e.clientX / window.innerWidth) * 2 - 1;
     souris.y = -(e.clientY / window.innerHeight) * 2 + 1;
-
-    // Delta du curseur : sert a reconnaitre la manette et a en tirer la direction.
-    // Verrouille, clientX/Y sont figes : on lit movementX/Y, non bornes par l'ecran.
-    {
-      const ddx = verrouille ? e.movementX : (curseurPrec ? e.clientX - curseurPrec.x : 0);
-      const ddy = verrouille ? e.movementY : (curseurPrec ? e.clientY - curseurPrec.y : 0);
-      const d = Math.hypot(ddx, ddy);
-      if (d > 2) {   // on ignore le bruit sub-pixel
-        // "Cardinal" = quasi purement horizontal ou vertical : la marque d'un
-        // pave directionnel. Un geste de souris est presque toujours diagonal.
-        const cardinal = Math.min(Math.abs(ddx), Math.abs(ddy)) <= 0.4 * Math.max(Math.abs(ddx), Math.abs(ddy));
-        if (cardinal) {
-          confianceManette = Math.min(3, confianceManette + 1);
-          if (confianceManette >= 3 && !manette) activerManette();
-        } else if (manette) {
-          desactiverManette();   // un vrai geste de souris : on rend la main au PC
-        } else {
-          confianceManette = 0;
-        }
-        mvtCurseur.dx = ddx / d;
-        mvtCurseur.dy = ddy / d;
-        mvtCurseur.t = performance.now();
-      }
-    }
-    curseurPrec = { x: e.clientX, y: e.clientY };
   }
 
   function surPointerUp(e) {
@@ -246,18 +168,7 @@ export function creerCommandes({ canvas, camera, scene }) {
       return resultat;
     }
 
-    // 3a. Manette de TV : le MOUVEMENT du curseur donne la direction. Tant que le
-    //     curseur bouge, on avance dans ce sens ; des qu'il s'immobilise (au-dela
-    //     de la fenetre), on s'arrete. C'est le "pousse = va, relache = stop".
-    if (manette) {
-      if (performance.now() - mvtCurseur.t < R.CURSEUR_MANETTE_FENETRE) {
-        // dy de l'ecran descend, "vers le haut" monte : d'ou le signe.
-        return versLeMonde(mvtCurseur.dx, -mvtCurseur.dy, 1);
-      }
-      return resultat;
-    }
-
-    // 3b. La souris, si la bascule est enclenchee.
+    // 3. La souris, si la bascule est enclenchee.
     if (sourisActive && pointSolValide) {
       const dx = pointSol.x - positionJoueur.x;
       const dz = pointSol.z - positionJoueur.z;
@@ -276,9 +187,8 @@ export function creerCommandes({ canvas, camera, scene }) {
   function majVisuels(enJeu) {
     majPointSol();
 
-    // Anneau au sol : seulement en mode PC souris (pas en manette, ou seul le
-    // mouvement compte), et seulement pendant la partie.
-    const montrerCurseur = enJeu && mode === 'pc' && pointSolValide && !manette;
+    // Anneau au sol : seulement en mode PC, et seulement pendant la partie.
+    const montrerCurseur = enJeu && mode === 'pc' && pointSolValide;
     curseur.visible = montrerCurseur;
     if (montrerCurseur) {
       curseur.position.set(pointSol.x, 0.06, pointSol.z);
@@ -309,8 +219,6 @@ export function creerCommandes({ canvas, camera, scene }) {
   return {
     direction,
     majVisuels,
-    demanderVerrouillage,
-    libererVerrouillage,
     get mode() { return mode; },
     get sourisActive() { return sourisActive; },
     reinitialiser() { sourisActive = false; doigt = null; touches.clear(); },

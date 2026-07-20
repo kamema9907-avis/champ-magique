@@ -260,9 +260,6 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
   function finirPartie() {
     etat = 'fin';
     sons.jouer('fin');
-    // On relache le verrouillage du pointeur (manette TV) : le menu redevient
-    // navigable au curseur.
-    commandes.libererVerrouillage();
     ui.afficherFin(score, tableauCourant);
   }
 
