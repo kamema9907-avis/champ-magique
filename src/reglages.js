@@ -97,6 +97,9 @@ export const COULEURS = {
   paille: 0xe8c56a,
   degat: 0xff4444,
   rocher: 0x8a8577,
+  glace: 0xbfe6f5,   // blocs de glace, tableau 3
+  lave: 0x40201c,    // rochers de lave, tableau 4 (la lueur est ajoutee en emissive)
+  laveLueur: 0x8a1e00,
 };
 
 // --- Tableau 2 : Les Rochers ----------------------------------------------
@@ -111,11 +114,13 @@ export const ROCHER_DISTANCE_ENTRE = 8.0;        // distance mini entre deux roc
 export const ROCHER_EXCLUSION_PLANTE = 2.0;      // plantes/cristaux gardent cette distance du centre
 export const SOL_RELIEF_BUMP = 1.2;              // force du relief (bumpMap) du sol au tableau 2
 
-// Palette par tableau : [tableau 1, tableau 2]. Re-skin leger du tableau 2 :
-// meme geometrie, seules quelques couleurs changent pour signaler un autre lieu.
+// Palette par tableau. Meme geometrie partout, seules les couleurs changent pour
+// signaler un autre lieu. Le sol des tableaux >= 2 recoit aussi la texture de relief.
 export const PALETTE_TABLEAU = [
-  { sol: COULEURS.sol, ciel: COULEURS.ciel, feuille: COULEURS.feuille },
-  { sol: 0x9c7a4d, ciel: 0xcbb28f, feuille: 0xcf7a33 },   // sol aride, ciel chaud, arbres orangés
+  { sol: COULEURS.sol, ciel: COULEURS.ciel, feuille: COULEURS.feuille },   // 1 Le Champ
+  { sol: 0x9c7a4d, ciel: 0xcbb28f, feuille: 0xcf7a33 },   // 2 Les Rochers : aride, chaud, orangé
+  { sol: 0xcdddea, ciel: 0xb9cdd8, feuille: 0xa9d2ea },   // 3 Forêt Gelée : neige, ciel froid, givre
+  { sol: 0x4a3a36, ciel: 0x7a3028, feuille: 0x3a2420 },   // 4 Terres de Feu : sol sombre, ciel rouge
 ];
 
 // --- Profils --------------------------------------------------------------

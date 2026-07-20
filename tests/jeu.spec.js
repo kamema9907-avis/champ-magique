@@ -140,3 +140,27 @@ test('tableau 2 : les rochers apparaissent, les plantes les evitent, et rien ne 
 
   expect(erreurs).toEqual([]);
 });
+
+// Tableaux 3 et 4 : meme mecanique d'obstacles que le tableau 2 (deja testee en
+// duree ci-dessus), on verifie ici le nombre d'obstacles, l'evitement des
+// plantes, et on prend une capture pour juger le rendu.
+for (const { tableau, nom } of [{ tableau: 3, nom: 'foret_gelee' }, { tableau: 4, nom: 'terres_de_feu' }]) {
+  test(`tableau ${tableau} : obstacles en place et plantes a l'ecart`, async ({ page }) => {
+    const erreurs = await ouvrir(page);
+    await page.evaluate((t) => window.__test.demarrer(t, 3), tableau);
+
+    const etat = await page.evaluate(() => window.__test.etat());
+    expect(etat.tableau).toBe(tableau);
+    expect(etat.rochers).toBe(12);
+    await page.screenshot({ path: path.join(CAPTURES, `test_5_tableau${tableau}_${nom}.png`) });
+
+    const rochers = await page.evaluate(() => window.__test.rochers());
+    const plantes = await page.evaluate(() => window.__test.plantesPos());
+    for (const p of plantes) {
+      for (const r of rochers) {
+        expect(Math.hypot(p.x - r.x, p.z - r.z)).toBeGreaterThanOrEqual(1.3);
+      }
+    }
+    expect(erreurs).toEqual([]);
+  });
+}
