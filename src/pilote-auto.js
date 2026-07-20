@@ -83,12 +83,26 @@ export function brancherPiloteAuto({ jeu, commandes, ui, sons, camera }) {
       chrono: Math.ceil(jeu.tempsRestant),
       plantes: jeu.plantes.length,
       ennemis: jeu.ennemis.length,
+      rochers: jeu.rochers.length,
+      tableau: jeu.tableauCourant,
       cristal: jeu.cristal !== null,
       joueur: { x: +jeu.joueur.position.x.toFixed(2), z: +jeu.joueur.position.z.toFixed(2) },
       mode: commandes.mode,
       compteurs: { ...jeu.compteurs },
     }),
-    demarrer: () => { sons.deverrouiller(); jeu.demarrerPartie(); },
+    demarrer: (tableau = 1, niveau = R.NIVEAU_DEFAUT) => {
+      sons.deverrouiller();
+      jeu.demarrerPartie(niveau, tableau);
+    },
+    // Affiche l'ecran de fin sans jouer 60 s : sert a tester records et deblocage.
+    afficherFin: (score, tableau) => ui.afficherFin(score, tableau),
+    // Positions des rochers et des plantes, pour verifier les invariants du tableau 2.
+    rochers: () => jeu.rochers.map((r) => ({
+      x: +r.position.x.toFixed(2), z: +r.position.z.toFixed(2), rayon: +r.userData.rayon.toFixed(2),
+    })),
+    plantesPos: () => jeu.plantes.map((p) => ({
+      x: +p.position.x.toFixed(2), z: +p.position.z.toFixed(2),
+    })),
     // Fait apparaitre le cristal tot, et demande a figer le jeu des qu'il sort.
     cristalTot: () => { figerAuCristal = true; jeu._reglerCristalPourTest(2.0, 7.0); },
     forcerFleches: (l) => commandes._test.forcerFleches(l),

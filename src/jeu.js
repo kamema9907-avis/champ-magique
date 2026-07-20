@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import * as R from './reglages.js';
 import { TYPES_PLANTES, TYPE_CRISTAL, typeAuHasard } from './plantes.js';
 import { batiJoueur, batiEnnemi } from './personnages.js';
+import { batiRocher } from './rochers.js';
 
 const auHasard = (min, max) => min + Math.random() * (max - min);
 const borner = (v, min, max) => Math.min(max, Math.max(min, v));
@@ -21,7 +22,7 @@ function versAngle(actuel, cible, pasMax) {
   return actuel + borner(ecart, -pasMax, pasMax);
 }
 
-export function creerJeu({ scene, camera, commandes, sons, ui }) {
+export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, reliefSol }) {
   const joueur = batiJoueur();
   scene.add(joueur);
 
@@ -30,6 +31,8 @@ export function creerJeu({ scene, camera, commandes, sons, ui }) {
   let tempsRestant = R.DUREE_PARTIE;
   let plantes = [];
   let ennemis = [];
+  let rochers = [];
+  let tableauCourant = 1;
   let cristal = null;
   let cristalTempsRestant = 0;
   let delaiCristal = R.CRISTAL_PREMIER_DELAI;
@@ -44,15 +47,82 @@ export function creerJeu({ scene, camera, commandes, sons, ui }) {
   // Comptage, pour comparer le comportement avec la version Python de reference.
   let compteurs = { recoltes: 0, degats: 0, pointsPerdus: 0, cristaux: 0, pas: 0 };
 
-  /** Un point libre du champ, a bonne distance d'une reference (le joueur). */
+  /** Distance au rocher le plus proche (Infini s'il n'y a pas de rocher). */
+  function ecartAuRocherLePlusProche(point) {
+    let mini = Infinity;
+    for (const rocher of rochers) {
+      const d = distanceSol(point, rocher.position);
+      if (d < mini) mini = d;
+    }
+    return mini;
+  }
+
+  /**
+   * Un point libre du champ, a bonne distance d'une reference (le joueur) ET
+   * a l'ecart des rochers. Si aucun point parfait n'est trouve en 40 essais, on
+   * renvoie le meilleur compromis (le plus loin des rochers) : ainsi une plante
+   * ne nait jamais coincee au centre d'un rocher, meme quand le champ est charge.
+   */
   function positionAleatoire(distanceMini = 0, reference = null) {
     const limite = R.DEMI_CHAMP - R.MARGE_PLANTE;
-    let point = new THREE.Vector3();
+    const point = new THREE.Vector3();
+    let meilleur = null;
+    let meilleurEcart = -Infinity;
     for (let essai = 0; essai < 40; essai++) {
       point.set(auHasard(-limite, limite), 0, auHasard(-limite, limite));
-      if (!reference || distanceSol(point, reference) >= distanceMini) return point;
+      if (reference && distanceSol(point, reference) < distanceMini) continue;
+      const ecart = ecartAuRocherLePlusProche(point);
+      if (ecart >= R.ROCHER_EXCLUSION_PLANTE) return point;
+      if (ecart > meilleurEcart) { meilleurEcart = ecart; meilleur = point.clone(); }
     }
-    return point;
+    return meilleur || point;
+  }
+
+  /** Repousse une position hors de tout rocher, en glissant le long de son bord. */
+  function ecarterDesRochers(position) {
+    for (const rocher of rochers) {
+      const dx = position.x - rocher.position.x;
+      const dz = position.z - rocher.position.z;
+      const d = Math.hypot(dx, dz);
+      if (d < R.ROCHER_RAYON_COLLISION) {
+        // A l'aplomb exact du centre (d ~ 0), on choisit une direction par defaut.
+        const nx = d > 0.0001 ? dx / d : 1;
+        const nz = d > 0.0001 ? dz / d : 0;
+        position.x = rocher.position.x + nx * R.ROCHER_RAYON_COLLISION;
+        position.z = rocher.position.z + nz * R.ROCHER_RAYON_COLLISION;
+      }
+    }
+  }
+
+  /**
+   * Seme `nombre` rochers au hasard, loin du depart et espaces entre eux. On les
+   * garde assez a l'ecart du bord pour que repousser un personnage hors d'un
+   * rocher ne le fasse jamais buter contre le mur invisible (sinon il pourrait
+   * se retrouver coince dans le rocher, dans un coin du champ).
+   */
+  function placerRochers(nombre) {
+    const limite = R.DEMI_CHAMP - R.MARGE_JOUEUR - R.ROCHER_RAYON_COLLISION - 0.5;
+    for (let i = 0; i < nombre; i++) {
+      for (let essai = 0; essai < 60; essai++) {
+        const x = auHasard(-limite, limite);
+        const z = auHasard(-limite, limite);
+        if (Math.hypot(x, z) < R.ROCHER_DISTANCE_DEPART) continue;
+        let tropPres = false;
+        for (const autre of rochers) {
+          if (Math.hypot(x - autre.position.x, z - autre.position.z) < R.ROCHER_DISTANCE_ENTRE) {
+            tropPres = true;
+            break;
+          }
+        }
+        if (tropPres) continue;
+        const rocher = batiRocher(auHasard(...R.ROCHER_RAYON_VISUEL));
+        rocher.position.x = x;
+        rocher.position.z = z;
+        scene.add(rocher);
+        rochers.push(rocher);
+        break;
+      }
+    }
   }
 
   function creerPlante(distanceMini = 0) {
@@ -128,12 +198,30 @@ export function creerJeu({ scene, camera, commandes, sons, ui }) {
     ui.volant(p.x, p.y, perte > 0 ? `-${perte}` : 'Aïe !', '#ff5555');
   }
 
-  function demarrerPartie(niveau = R.NIVEAU_DEFAUT) {
+  function demarrerPartie(niveau = R.NIVEAU_DEFAUT, tableau = 1) {
     for (const p of plantes) scene.remove(p);
     for (const e of ennemis) scene.remove(e);
+    for (const r of rochers) scene.remove(r);
     plantes = [];
     ennemis = [];
+    rochers = [];
     retirerCristal();
+
+    // Re-skin selon le tableau : meme decor, quelques couleurs changees pour que
+    // le tableau 2 se sente comme un autre lieu (une recompense).
+    tableauCourant = tableau;
+    const palette = R.PALETTE_TABLEAU[tableau - 1] || R.PALETTE_TABLEAU[0];
+    if (sol) {
+      sol.material.color.setHex(palette.sol);
+      // Texture et relief n'apparaissent qu'au tableau 2 ; le tableau 1 reste lisse.
+      const releve = tableau === 2;
+      sol.material.map = releve ? reliefSol.couleur : null;
+      sol.material.bumpMap = releve ? reliefSol.bump : null;
+      sol.material.bumpScale = R.SOL_RELIEF_BUMP;
+      sol.material.needsUpdate = true;   // changer une carte recompile le shader
+    }
+    if (feuillage) feuillage.color.setHex(palette.feuille);
+    scene.background.setHex(palette.ciel);
 
     score = 0;
     tempsRestant = R.DUREE_PARTIE;
@@ -147,6 +235,9 @@ export function creerJeu({ scene, camera, commandes, sons, ui }) {
     joueur.rotation.y = 0;
     joueur.userData.materiaux[0].color.setHex(R.COULEURS.salopette);
     camera.position.set(R.DECALAGE_CAMERA.x, R.DECALAGE_CAMERA.y, R.DECALAGE_CAMERA.z);
+
+    // Les rochers d'abord : plantes, cristaux et Rodeurs les eviteront ensuite.
+    if (tableau === 2) placerRochers(R.NB_ROCHERS[niveau - 1] || 0);
 
     for (let i = 0; i < R.NB_PLANTES; i++) creerPlante();
 
@@ -169,7 +260,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui }) {
   function finirPartie() {
     etat = 'fin';
     sons.jouer('fin');
-    ui.afficherFin(score);
+    ui.afficherFin(score, tableauCourant);
   }
 
   // --- Mises a jour, toutes appelees avec un pas FIXE ----------------------
@@ -198,6 +289,9 @@ export function creerJeu({ scene, camera, commandes, sons, ui }) {
       const corps = joueur.userData.corps;
       corps.position.y += (0 - corps.position.y) * Math.min(1, dt * 10);
     }
+
+    // Rochers du tableau 2 : on bute dessus et on glisse le long du bord.
+    ecarterDesRochers(joueur.position);
 
     // Mur invisible : on bute et on glisse le long du bord, sans jamais sortir.
     const limite = R.DEMI_CHAMP - R.MARGE_JOUEUR;
@@ -281,6 +375,9 @@ export function creerJeu({ scene, camera, commandes, sons, ui }) {
                                       THREE.MathUtils.degToRad(400) * dt);
       }
 
+      // Les Rodeurs sont bloques par les rochers, eux aussi, et glissent autour.
+      ecarterDesRochers(ennemi.position);
+
       const limite = R.DEMI_CHAMP - R.MARGE_JOUEUR;
       ennemi.position.x = borner(ennemi.position.x, -limite, limite);
       ennemi.position.z = borner(ennemi.position.z, -limite, limite);
@@ -360,6 +457,8 @@ export function creerJeu({ scene, camera, commandes, sons, ui }) {
     get tempsRestant() { return tempsRestant; },
     get plantes() { return plantes; },
     get ennemis() { return ennemis; },
+    get rochers() { return rochers; },
+    get tableauCourant() { return tableauCourant; },
     get cristal() { return cristal; },
     get compteurs() { return compteurs; },
     set crochetCristal(f) { crochetCristal = f; },

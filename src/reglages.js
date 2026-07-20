@@ -93,7 +93,27 @@ export const COULEURS = {
   salopette: 0x2a4fd6,
   paille: 0xe8c56a,
   degat: 0xff4444,
+  rocher: 0x8a8577,
 };
+
+// --- Tableau 2 : Les Rochers ----------------------------------------------
+// Deuxieme tableau, deverrouille par le record. De petits rochers servent
+// d'obstacles a contourner. Ces valeurs sont a ajuster en jouant.
+export const SEUIL_TABLEAU_2 = 560;              // record du tableau 1 requis pour debloquer
+export const NB_ROCHERS = [4, 8, 12];            // par niveau (Facile / Moyen / Difficile)
+export const ROCHER_RAYON_VISUEL = [0.8, 1.2];   // tirage aleatoire, pour varier les rochers
+export const ROCHER_RAYON_COLLISION = 1.3;       // joueur et Rodeurs sont bloques a ce rayon
+export const ROCHER_DISTANCE_DEPART = 6.0;       // distance mini depuis le depart (0,0)
+export const ROCHER_DISTANCE_ENTRE = 8.0;        // distance mini entre deux rochers (pas de mur)
+export const ROCHER_EXCLUSION_PLANTE = 2.0;      // plantes/cristaux gardent cette distance du centre
+export const SOL_RELIEF_BUMP = 1.2;              // force du relief (bumpMap) du sol au tableau 2
+
+// Palette par tableau : [tableau 1, tableau 2]. Re-skin leger du tableau 2 :
+// meme geometrie, seules quelques couleurs changent pour signaler un autre lieu.
+export const PALETTE_TABLEAU = [
+  { sol: COULEURS.sol, ciel: COULEURS.ciel, feuille: COULEURS.feuille },
+  { sol: 0x9c7a4d, ciel: 0xcbb28f, feuille: 0xcf7a33 },   // sol aride, ciel chaud, arbres orangés
+];
 
 // --- Profils --------------------------------------------------------------
 // Modifiables librement : c'est la seule ligne a changer pour renommer.
@@ -101,3 +121,4 @@ export const JOUEURS = ['Raphaël', 'Papi', 'Invité'];
 export const CLE_STOCKAGE = 'champ-magique.records';
 export const CLE_DERNIER_JOUEUR = 'champ-magique.dernier-joueur';
 export const CLE_NIVEAU = 'champ-magique.niveau';
+export const CLE_TABLEAU = 'champ-magique.tableau';

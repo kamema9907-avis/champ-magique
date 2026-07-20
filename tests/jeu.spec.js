@@ -91,3 +91,52 @@ test('une partie complete se joue et le score reste dans la fourchette de jeux_1
 
   expect(erreurs).toEqual([]);
 });
+
+test('tableau 2 : les rochers apparaissent, les plantes les evitent, et rien ne se coince', async ({ page }) => {
+  test.setTimeout(60_000);
+  const erreurs = await ouvrir(page);
+
+  // Tableau 2, niveau Difficile : le maximum de rochers (12).
+  await page.evaluate(() => window.__test.demarrer(2, 3));
+
+  const etat = await page.evaluate(() => window.__test.etat());
+  expect(etat.tableau).toBe(2);
+  expect(etat.rochers).toBe(12);
+  await page.screenshot({ path: path.join(CAPTURES, 'test_5_tableau2.png') });
+
+  const COLLISION = 1.3;
+
+  // Aucune plante ne doit naitre dans un rocher : sinon elle serait irrecoltable
+  // (le joueur ne peut pas entrer dans le rocher pour l'atteindre).
+  const rochers = await page.evaluate(() => window.__test.rochers());
+  const plantes = await page.evaluate(() => window.__test.plantesPos());
+  for (const p of plantes) {
+    for (const r of rochers) {
+      expect(Math.hypot(p.x - r.x, p.z - r.z)).toBeGreaterThanOrEqual(COLLISION);
+    }
+  }
+
+  // On laisse le pilote jouer ~8 s en echantillonnant la position du joueur : il
+  // ne doit JAMAIS se retrouver dans un rocher, et il doit continuer d'avancer
+  // (preuve qu'aucun rocher ne le fige).
+  let distanceMini = Infinity;
+  const positions = [];
+  for (let i = 0; i < 40; i++) {
+    const j = await page.evaluate(() => window.__test.etat().joueur);
+    positions.push(j);
+    for (const r of rochers) {
+      distanceMini = Math.min(distanceMini, Math.hypot(j.x - r.x, j.z - r.z));
+    }
+    await page.waitForTimeout(200);
+  }
+
+  // Jamais dans un rocher (petite tolerance pour l'arrondi a 2 decimales).
+  expect(distanceMini).toBeGreaterThanOrEqual(COLLISION - 0.06);
+
+  // Le joueur a bel et bien parcouru du chemin : il n'est pas coince.
+  const deplacement = positions.slice(1).reduce((s, p, k) =>
+    s + Math.hypot(p.x - positions[k].x, p.z - positions[k].z), 0);
+  expect(deplacement).toBeGreaterThan(5);
+
+  expect(erreurs).toEqual([]);
+});

@@ -20,17 +20,17 @@ rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2));  // au-dela, on paie 
 rendu.shadowMap.enabled = true;
 rendu.shadowMap.type = THREE.PCFShadowMap;   // PCFSoft est deprecie depuis three 0.185
 
-const { scene, camera } = creerMonde();
+const { scene, camera, sol, feuillage, reliefSol } = creerMonde();
 const commandes = creerCommandes({ canvas, camera, scene });
 const sons = creerSons();
 const ui = creerInterface({ surDemarrage: () => demarrer() });
-const jeu = creerJeu({ scene, camera, commandes, sons, ui });
+const jeu = creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, reliefSol });
 
 function demarrer() {
   // Le son doit etre debloque DANS le geste de l'utilisateur : c'est la seule
   // fenetre ou iOS l'autorise. Notre bouton "Commencer" en est un.
   sons.deverrouiller();
-  jeu.demarrerPartie(ui.niveau);
+  jeu.demarrerPartie(ui.niveau, ui.tableau);
 }
 
 function redimensionner() {

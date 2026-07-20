@@ -61,6 +61,72 @@ function batirArbres() {
   return groupe;
 }
 
+/**
+ * Textures procedurales pour le sol du tableau 2, generees une seule fois et
+ * sans aucun fichier externe :
+ *  - `bump`    : un bruit applique en bumpMap ou le soleil accroche des ombres,
+ *                pour un relief caillouteux SANS changer la geometrie (les
+ *                personnages se deplacent a plat, y = 0 : de vraies bosses les
+ *                feraient flotter au-dessus des creux) ;
+ *  - `couleur` : une variation de teinte douce (taches de terre plus claires ou
+ *                plus sombres) qui se lit tout de suite comme de la texture,
+ *                quel que soit l'angle de la lumiere.
+ * Les deux se raccordent sur elles-memes (pavage sans couture).
+ */
+function genererTexturesSol() {
+  const T = 512;
+  const hasard = (x, y) => {
+    const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+    return n - Math.floor(n);
+  };
+  // Bruit "valeur" periodique : les indices de grille bouclent, donc les bords
+  // de la texture se raccordent et le pavage ne laisse aucune couture visible.
+  const octave = (x, y, cellule) => {
+    const periode = T / cellule;
+    const gx = x / cellule, gy = y / cellule;
+    const x0 = Math.floor(gx), y0 = Math.floor(gy);
+    const fx = gx - x0, fy = gy - y0;
+    const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+    const ax = x0 % periode, ay = y0 % periode;
+    const bx = (x0 + 1) % periode, by = (y0 + 1) % periode;
+    const a = hasard(ax, ay), b = hasard(bx, ay);
+    const c = hasard(ax, by), d = hasard(bx, by);
+    return a * (1 - u) * (1 - v) + b * u * (1 - v) + c * (1 - u) * v + d * u * v;
+  };
+
+  const bump = document.createElement('canvas');
+  const couleur = document.createElement('canvas');
+  bump.width = bump.height = couleur.width = couleur.height = T;
+  const imgBump = bump.getContext('2d').createImageData(T, T);
+  const imgCoul = couleur.getContext('2d').createImageData(T, T);
+
+  for (let y = 0; y < T; y++) {
+    for (let x = 0; x < T; x++) {
+      // Grandes ondulations + relief moyen + grain fin.
+      const n = octave(x, y, 128) * 0.5 + octave(x, y, 32) * 0.3 + octave(x, y, 16) * 0.2;
+      const i = (y * T + x) * 4;
+      // Relief : plein contraste, pour que le soleil accroche bien.
+      const b = Math.floor(35 + n * 220);
+      imgBump.data[i] = imgBump.data[i + 1] = imgBump.data[i + 2] = b;
+      imgBump.data[i + 3] = 255;
+      // Couleur : gris resserre (~0.72 a 1.0), multiplie la teinte du sol.
+      const g = Math.floor(184 + n * 71);
+      imgCoul.data[i] = imgCoul.data[i + 1] = imgCoul.data[i + 2] = g;
+      imgCoul.data[i + 3] = 255;
+    }
+  }
+  bump.getContext('2d').putImageData(imgBump, 0, 0);
+  couleur.getContext('2d').putImageData(imgCoul, 0, 0);
+
+  const finir = (canvas) => {
+    const t = new THREE.CanvasTexture(canvas);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(8, 8);
+    return t;
+  };
+  return { bump: finir(bump), couleur: finir(couleur) };
+}
+
 export function creerMonde() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(R.COULEURS.ciel);
@@ -75,7 +141,8 @@ export function creerMonde() {
   sol.receiveShadow = true;
   scene.add(sol);
 
-  scene.add(batirArbres());
+  const arbres = batirArbres();
+  scene.add(arbres);
 
   scene.add(new THREE.HemisphereLight(0xbfe3ff, 0x5aa02c, 1.1));
 
@@ -104,5 +171,11 @@ export function creerMonde() {
   // l'orientation reste juste, et la camera ne tourne jamais.
   camera.lookAt(0, 0, 0);
 
-  return { scene, camera, soleil, sol };
+  // Le feuillage (2e enfant du groupe : troncs d'abord, feuilles ensuite) est
+  // renvoye pour pouvoir le re-teinter selon le tableau, comme le relief du sol.
+  return {
+    scene, camera, soleil, sol,
+    feuillage: arbres.children[1].material,
+    reliefSol: genererTexturesSol(),
+  };
 }

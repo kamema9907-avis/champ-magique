@@ -99,6 +99,24 @@ Le niveau choisi est mémorisé dans le `localStorage`, comme le dernier joueur.
 Les calendriers d'apparition sont la constante `NIVEAUX_APPARITION` dans
 [`src/reglages.js`](src/reglages.js) : ajouter un niveau ne demande qu'une ligne.
 
+### Le tableau 2 : Les Rochers
+
+Un **second tableau**, débloqué en récompense, où de petits rochers servent
+d'obstacles à contourner (joueur **et** Rôdeurs sont bloqués et glissent le long).
+Le sol et le ciel sont re-teintés pour signaler un autre lieu.
+
+- **Déverrouillage** : quand le record du profil au **tableau 1 atteint 560**
+  (`SEUIL_TABLEAU_2`). C'est **par profil** : chacun le mérite de son côté. Le
+  déblocage n'est pas un drapeau stocké, il se **déduit du record** : remettre le
+  record à zéro (appui long) re-verrouille automatiquement le tableau 2.
+- **Trois niveaux aussi**, avec le même rythme de Rôdeurs que le tableau 1, mais
+  un nombre de rochers croissant : Facile **4**, Moyen **8**, Difficile **12**
+  (`NB_ROCHERS`). Les rochers sont placés au hasard à chaque partie, loin du
+  départ et espacés ; plantes et cristaux les évitent.
+- **Records séparés** : chaque profil a un record tableau 1 (`T1`) et tableau 2
+  (`T2`). L'écran de départ affiche un cadenas tant que le tableau 2 est
+  verrouillé, puis les deux scores une fois débloqué.
+
 ## Régler la difficulté
 
 Tout est dans [`src/reglages.js`](src/reglages.js). **Ces chiffres viennent de
@@ -112,6 +130,9 @@ Tout est dans [`src/reglages.js`](src/reglages.js). **Ces chiffres viennent de
 | `RAYON_RECOLTE` | 1.3 m. Augmenter si c'est trop dur. |
 | `RAYON_JOYSTICK` | 70 px : écart du pouce donnant la vitesse maximale. Baisser le rend plus nerveux. |
 | `ZONE_MORTE_JOYSTICK` | 8 px : en dessous, on ne bouge pas. Monter si le personnage part tout seul. |
+| `SEUIL_TABLEAU_2` | 560 : record du tableau 1 pour débloquer les Rochers. Baisser si c'est trop dur à atteindre. |
+| `NB_ROCHERS` | `[4, 8, 12]` par niveau. Au-delà, le champ sature et des passages se ferment. |
+| `ROCHER_RAYON_COLLISION` | 1.3 m : à quelle distance on bute sur un rocher. |
 
 ## Vérifier
 
@@ -194,6 +215,7 @@ activer Pages **avant** le premier push, ou relancer le workflow ensuite.
 | [`src/monde.js`](src/monde.js) | Sol, arbres, lumières, caméra. |
 | [`src/plantes.js`](src/plantes.js) | Les cinq plantes. |
 | [`src/personnages.js`](src/personnages.js) | Le fermier et les Rôdeurs. |
+| [`src/rochers.js`](src/rochers.js) | Les rochers-obstacles du tableau 2. |
 | [`src/commandes.js`](src/commandes.js) | Joystick tactile, souris, flèches. |
 | [`src/jeu.js`](src/jeu.js) | L'état et la boucle de partie. |
 | [`src/interface.js`](src/interface.js) | HUD, écrans, profils. |
