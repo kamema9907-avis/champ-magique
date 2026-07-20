@@ -75,6 +75,15 @@ export function creerCommandes({ canvas, camera, scene }) {
     if (!sourisDansLaPage) { pointSolValide = false; return; }
     rayon.setFromCamera(souris, camera);
     pointSolValide = rayon.ray.intersectPlane(PLAN_SOL, pointSol) !== null;
+    // On borne la cible a l'aire de jeu. Sinon, en visant le ciel ou les arbres,
+    // la cible tombe tres loin hors du champ : le personnage fonce vers le bord,
+    // bute sur le mur invisible et s'y colle. Bornee, elle reste au pire sur le
+    // bord interieur : le personnage l'atteint et s'arrete.
+    if (pointSolValide) {
+      const limite = R.DEMI_CHAMP - R.MARGE_JOUEUR;
+      pointSol.x = Math.min(limite, Math.max(-limite, pointSol.x));
+      pointSol.z = Math.min(limite, Math.max(-limite, pointSol.z));
+    }
   }
 
   // --- Ecouteurs ----------------------------------------------------------

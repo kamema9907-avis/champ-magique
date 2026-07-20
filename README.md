@@ -87,17 +87,19 @@ Pour changer les noms : la constante `JOUEURS` dans [`src/reglages.js`](src/regl
 ### Les niveaux
 
 Trois boutons sur l'écran de départ, **Facile / Moyen / Difficile**, changent le
-rythme d'arrivée des Rôdeurs (la partie dure toujours 60 secondes) :
+rythme d'arrivée des Rôdeurs **et leur vitesse** (la partie dure toujours 60 s) :
 
-| Niveau | Arrivée des Rôdeurs | Rôdeurs en fin de partie |
-|---|---|---|
-| Facile | 0 s, puis 30 s | 2 |
-| Moyen | 0, 20, 40 s | 3 |
-| Difficile | toutes les 10 s | 6 |
+| Niveau | Arrivée des Rôdeurs | Rôdeurs en fin de partie | Vitesse des Rôdeurs |
+|---|---|---|---|
+| Facile | 0 s, puis 30 s | 2 | vitesse de base |
+| Moyen | 0, 20, 40 s | 3 | +2,5 % |
+| Difficile | toutes les 10 s | 6 | +5 % |
 
-Le niveau choisi est mémorisé dans le `localStorage`, comme le dernier joueur.
-Les calendriers d'apparition sont la constante `NIVEAUX_APPARITION` dans
-[`src/reglages.js`](src/reglages.js) : ajouter un niveau ne demande qu'une ligne.
+Même au niveau 3, les Rôdeurs restent à 68 % de la vitesse du joueur : on peut
+toujours les semer. Le niveau choisi est mémorisé dans le `localStorage`, comme
+le dernier joueur. Les calendriers d'apparition (`NIVEAUX_APPARITION`) et les
+facteurs de vitesse (`VITESSE_ENNEMI_NIVEAU`) sont dans
+[`src/reglages.js`](src/reglages.js).
 
 ### Le tableau 2 : Les Rochers
 

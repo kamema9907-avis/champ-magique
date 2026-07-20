@@ -33,6 +33,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
   let ennemis = [];
   let rochers = [];
   let tableauCourant = 1;
+  let niveauCourant = 1;   // pour la vitesse des Rodeurs, croissante avec le niveau
   let cristal = null;
   let cristalTempsRestant = 0;
   let delaiCristal = R.CRISTAL_PREMIER_DELAI;
@@ -210,6 +211,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
     // Re-skin selon le tableau : meme decor, quelques couleurs changees pour que
     // le tableau 2 se sente comme un autre lieu (une recompense).
     tableauCourant = tableau;
+    niveauCourant = niveau;
     const palette = R.PALETTE_TABLEAU[tableau - 1] || R.PALETTE_TABLEAU[0];
     if (sol) {
       sol.material.color.setHex(palette.sol);
@@ -345,6 +347,8 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
   }
 
   function majEnnemis(dt) {
+    // La vitesse de base des Rodeurs augmente avec le niveau de difficulte.
+    const vitesseBase = R.VITESSE_ENNEMI * (R.VITESSE_ENNEMI_NIVEAU[niveauCourant - 1] || 1);
     for (const ennemi of ennemis) {
       if (ennemi.userData.apparition < 1) {
         ennemi.userData.apparition = Math.min(1, ennemi.userData.apparition + dt / 0.4);
@@ -368,7 +372,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
       const dz = but.z - ennemi.position.z;
       const norme = Math.hypot(dx, dz);
       if (norme > 0.05) {
-        const vitesse = d.mode === 'chasse' ? R.VITESSE_ENNEMI : R.VITESSE_ENNEMI * 0.45;
+        const vitesse = d.mode === 'chasse' ? vitesseBase : vitesseBase * 0.45;
         ennemi.position.x += (dx / norme) * vitesse * dt;
         ennemi.position.z += (dz / norme) * vitesse * dt;
         ennemi.rotation.y = versAngle(ennemi.rotation.y, Math.atan2(dx, dz),
