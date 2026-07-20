@@ -251,7 +251,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol }) {
   function finirPartie() {
     etat = 'fin';
     sons.jouer('fin');
-    ui.afficherFin(score);
+    ui.afficherFin(score, tableauCourant);
   }
 
   // --- Mises a jour, toutes appelees avec un pas FIXE ----------------------

@@ -95,6 +95,11 @@ html, body {
 .avert { color: #ffb3b3; }
 .score-final { font-size: clamp(28px, 4.4vw, 52px); font-weight: 700; color: #fff; }
 .sous-score { color: #ffe9a8; }
+.deblocage {
+  font-size: clamp(16px, 2.4vw, 26px); font-weight: 700; color: #7dff9b;
+  margin: .3em 0; animation: pop-deblocage .5s ease-out;
+}
+@keyframes pop-deblocage { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 .plantes {
   display: flex; flex-wrap: wrap; gap: .5em 1.1em; justify-content: center;

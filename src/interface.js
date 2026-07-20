@@ -11,16 +11,25 @@ import * as R from './reglages.js';
 
 const $ = (id) => document.getElementById(id);
 
+// Un record par tableau et par joueur : { t1, t2 }.
+const recordVide = () => ({ t1: 0, t2: 0 });
+
 function chargerRecords() {
   try {
     const brut = JSON.parse(localStorage.getItem(R.CLE_STOCKAGE) || '{}');
     const records = {};
-    for (const nom of R.JOUEURS) records[nom] = Number(brut[nom]) || 0;
+    for (const nom of R.JOUEURS) {
+      const v = brut[nom];
+      // Migration : l'ancien format (v1.0) stockait un simple nombre, qui etait
+      // le record du tableau 1. On le reprend tel quel pour ne rien perdre.
+      if (typeof v === 'number') records[nom] = { t1: v, t2: 0 };
+      else records[nom] = { t1: Number(v && v.t1) || 0, t2: Number(v && v.t2) || 0 };
+    }
     return records;
   } catch {
     // Stockage inaccessible (navigation privee, donnees effacees) : on joue
     // quand meme, sans record. Jamais de plantage pour ca.
-    return Object.fromEntries(R.JOUEURS.map((n) => [n, 0]));
+    return Object.fromEntries(R.JOUEURS.map((n) => [n, recordVide()]));
   }
 }
 
@@ -42,6 +51,15 @@ export function creerInterface({ surDemarrage }) {
   const boutons = new Map();
   const boutonsNiveau = new Map();
 
+  /** Le tableau 2 est debloque des que le record du tableau 1 atteint le seuil. */
+  const deverrouille = (nom) => records[nom].t1 >= R.SEUIL_TABLEAU_2;
+
+  /** Ce qu'on affiche sous un nom : cadenas avant deblocage, deux nombres apres. */
+  function texteRecord(nom) {
+    const rec = records[nom];
+    return deverrouille(nom) ? `T1 ${rec.t1} · T2 ${rec.t2}` : `${rec.t1} · 🔒`;
+  }
+
   function dessinerJoueurs() {
     const conteneur = $('joueurs');
     conteneur.innerHTML = '';
@@ -49,7 +67,7 @@ export function creerInterface({ surDemarrage }) {
     for (const nom of R.JOUEURS) {
       const bouton = document.createElement('button');
       bouton.className = 'joueur' + (nom === joueur ? ' actif' : '');
-      bouton.innerHTML = `<span class="nom">${nom}</span><span class="record">${records[nom]}</span>`;
+      bouton.innerHTML = `<span class="nom">${nom}</span><span class="record">${texteRecord(nom)}</span>`;
       brancherAppuiLong(bouton, nom);
       bouton.addEventListener('click', () => { choisir(nom); });
       conteneur.appendChild(bouton);
@@ -91,9 +109,11 @@ export function creerInterface({ surDemarrage }) {
     const demarrer = () => {
       bouton.classList.add('efface');
       minuteur = setTimeout(() => {
-        records[nom] = 0;
+        // Efface les DEUX records : ca re-verrouille le tableau 2 (le record du
+        // tableau 1 retombe sous le seuil), exactement l'effet attendu.
+        records[nom] = recordVide();
         sauverRecords(records);
-        bouton.querySelector('.record').textContent = '0';
+        bouton.querySelector('.record').textContent = texteRecord(nom);
         bouton.classList.remove('efface');
         bouton.classList.add('efface-fait');
         setTimeout(() => bouton.classList.remove('efface-fait'), 600);
@@ -111,7 +131,7 @@ export function creerInterface({ surDemarrage }) {
   }
 
   function majRecordHud() {
-    $('record').textContent = `${joueur} · record ${records[joueur]}`;
+    $('record').textContent = `${joueur} · record ${records[joueur].t1}`;
   }
 
   const TEXTE_MENU = `
@@ -135,7 +155,7 @@ export function creerInterface({ surDemarrage }) {
 
   return {
     get joueur() { return joueur; },
-    get record() { return records[joueur]; },
+    get record() { return records[joueur].t1; },
     get niveau() { return niveau; },
 
     afficherMenu() {
@@ -152,17 +172,27 @@ export function creerInterface({ surDemarrage }) {
       majRecordHud();
     },
 
-    afficherFin(score) {
-      const nouveau = score > records[joueur];
+    afficherFin(score, tableau = 1) {
+      const cle = 't' + tableau;
+      const rec = records[joueur];
+      // Le deblocage se calcule sur le tableau 1 : on compare avant/apres pour
+      // savoir si CE score vient de franchir le seuil pour la premiere fois.
+      const etaitDeverrouille = deverrouille(joueur);
+      const nouveau = score > rec[cle];
       if (nouveau) {
-        records[joueur] = score;
+        rec[cle] = score;
         sauverRecords(records);
       }
+      const vientDeDebloquer = !etaitDeverrouille && deverrouille(joueur);
+
       $('titre').textContent = nouveau ? 'NOUVEAU RECORD !' : 'Temps écoulé !';
       $('titre').className = nouveau ? 'record-battu' : '';
+      const messageDeblocage = vientDeDebloquer
+        ? '<p class="deblocage">🎉 Tableau 2 débloqué !</p>' : '';
       $('corps').innerHTML = `
         <p class="score-final">${score} points</p>
-        <p class="sous-score">Meilleur score de ${joueur} : ${records[joueur]}</p>`;
+        ${messageDeblocage}
+        <p class="sous-score">Meilleur score de ${joueur} (tableau ${tableau}) : ${rec[cle]}</p>`;
       $('action').textContent = 'Rejouer';
       $('joueurs-bloc').style.display = '';
       $('panneau').style.display = '';

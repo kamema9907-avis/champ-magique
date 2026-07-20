@@ -94,6 +94,8 @@ export function brancherPiloteAuto({ jeu, commandes, ui, sons, camera }) {
       sons.deverrouiller();
       jeu.demarrerPartie(niveau, tableau);
     },
+    // Affiche l'ecran de fin sans jouer 60 s : sert a tester records et deblocage.
+    afficherFin: (score, tableau) => ui.afficherFin(score, tableau),
     // Positions des rochers et des plantes, pour verifier les invariants du tableau 2.
     rochers: () => jeu.rochers.map((r) => ({
       x: +r.position.x.toFixed(2), z: +r.position.z.toFixed(2), rayon: +r.userData.rayon.toFixed(2),
