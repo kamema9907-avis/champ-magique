@@ -67,6 +67,11 @@ export const RAMPE_SOURIS = 3.0;        // metres : pleine vitesse au-dela
 export const ZONE_MORTE_JOYSTICK = 8;   // pixels : en dessous, on ne bouge pas
 export const RAYON_JOYSTICK = 70;       // pixels : pleine vitesse au bord de l'anneau
 
+// Manette de TV (pave directionnel emule en curseur) : au-dela de ce delai sans
+// mouvement du curseur, on considere le pad relache et le personnage s'arrete.
+// Assez long pour ne pas hacher un maintien, assez court pour un arret net.
+export const CURSEUR_MANETTE_FENETRE = 180;   // millisecondes
+
 // --- Simulation -----------------------------------------------------------
 // Pas fixe, decouple de l'affichage. Sans cela, sur une machine lente le joueur
 // avancerait de presque un metre d'un coup et traverserait les plantes sans les

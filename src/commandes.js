@@ -61,6 +61,31 @@ export function creerCommandes({ canvas, camera, scene }) {
   const pointSol = new THREE.Vector3();
   let pointSolValide = false;
 
+  // --- Manette de TV (pave directionnel) ----------------------------------
+  // Une telecommande de TV (ex. Firestick dans Silk) n'est ni un gamepad ni des
+  // fleches : son pave deplace un CURSEUR, par a-coups purement horizontaux ou
+  // verticaux. On le reconnait a cette signature (mouvements "cardinaux"), et on
+  // passe alors a un controle base sur le MOUVEMENT du curseur, pas sa position :
+  // pousser le pad = avancer dans ce sens, relacher = s'arreter. La position du
+  // curseur devient sans importance (fini le personnage colle aux arbres).
+  // Un vrai geste de souris (diagonal) desactive le mode : le PC n'est pas gene.
+  let manette = false;
+  let confianceManette = 0;
+  let curseurPrec = null;                          // derniere position, pour le delta
+  const mvtCurseur = { dx: 0, dy: 0, t: -1e9 };    // direction ecran du dernier mouvement
+
+  function activerManette() {
+    manette = true;
+    // On tente de masquer le curseur du navigateur : en mode directionnel, sa
+    // position ne veut plus rien dire, et le voir sortir du champ perturbe.
+    document.body.style.cursor = 'none';
+  }
+  function desactiverManette() {
+    manette = false;
+    confianceManette = 0;
+    document.body.style.cursor = '';
+  }
+
   // Anneau pose au sol sous le curseur. Une commande a bascule n'est utilisable
   // que si son etat se voit : vert = il marche, gris = il est arrete.
   const curseur = new THREE.Mesh(
@@ -111,6 +136,30 @@ export function creerCommandes({ canvas, camera, scene }) {
     sourisDansLaPage = true;
     souris.x = (e.clientX / window.innerWidth) * 2 - 1;
     souris.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+    // Delta du curseur : sert a reconnaitre la manette et a en tirer la direction.
+    if (curseurPrec) {
+      const ddx = e.clientX - curseurPrec.x;
+      const ddy = e.clientY - curseurPrec.y;
+      const d = Math.hypot(ddx, ddy);
+      if (d > 2) {   // on ignore le bruit sub-pixel
+        // "Cardinal" = quasi purement horizontal ou vertical : la marque d'un
+        // pave directionnel. Un geste de souris est presque toujours diagonal.
+        const cardinal = Math.min(Math.abs(ddx), Math.abs(ddy)) <= 0.4 * Math.max(Math.abs(ddx), Math.abs(ddy));
+        if (cardinal) {
+          confianceManette = Math.min(3, confianceManette + 1);
+          if (confianceManette >= 3 && !manette) activerManette();
+        } else if (manette) {
+          desactiverManette();   // un vrai geste de souris : on rend la main au PC
+        } else {
+          confianceManette = 0;
+        }
+        mvtCurseur.dx = ddx / d;
+        mvtCurseur.dy = ddy / d;
+        mvtCurseur.t = performance.now();
+      }
+    }
+    curseurPrec = { x: e.clientX, y: e.clientY };
   }
 
   function surPointerUp(e) {
@@ -170,7 +219,18 @@ export function creerCommandes({ canvas, camera, scene }) {
       return resultat;
     }
 
-    // 3. La souris, si la bascule est enclenchee.
+    // 3a. Manette de TV : le MOUVEMENT du curseur donne la direction. Tant que le
+    //     curseur bouge, on avance dans ce sens ; des qu'il s'immobilise (au-dela
+    //     de la fenetre), on s'arrete. C'est le "pousse = va, relache = stop".
+    if (manette) {
+      if (performance.now() - mvtCurseur.t < R.CURSEUR_MANETTE_FENETRE) {
+        // dy de l'ecran descend, "vers le haut" monte : d'ou le signe.
+        return versLeMonde(mvtCurseur.dx, -mvtCurseur.dy, 1);
+      }
+      return resultat;
+    }
+
+    // 3b. La souris, si la bascule est enclenchee.
     if (sourisActive && pointSolValide) {
       const dx = pointSol.x - positionJoueur.x;
       const dz = pointSol.z - positionJoueur.z;
@@ -189,8 +249,9 @@ export function creerCommandes({ canvas, camera, scene }) {
   function majVisuels(enJeu) {
     majPointSol();
 
-    // Anneau au sol : seulement en mode PC, et seulement pendant la partie.
-    const montrerCurseur = enJeu && mode === 'pc' && pointSolValide;
+    // Anneau au sol : seulement en mode PC souris (pas en manette, ou seul le
+    // mouvement compte), et seulement pendant la partie.
+    const montrerCurseur = enJeu && mode === 'pc' && pointSolValide && !manette;
     curseur.visible = montrerCurseur;
     if (montrerCurseur) {
       curseur.position.set(pointSol.x, 0.06, pointSol.z);
