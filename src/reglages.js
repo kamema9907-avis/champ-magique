@@ -17,6 +17,9 @@ export const MARGE_PLANTE = 2.5;
 
 export const VITESSE_JOUEUR = 9.0;
 export const VITESSE_ENNEMI = VITESSE_JOUEUR * 0.65;  // 65% : on peut TOUJOURS s'echapper
+// La difficulte accelere les Rodeurs : +2,5 % de leur vitesse de base par niveau.
+// Au niveau 3 (x1,05) ils restent a 68 % du joueur, donc toujours semables.
+export const VITESSE_ENNEMI_NIVEAU = [1.0, 1.025, 1.05];  // niveaux 1 / 2 / 3
 export const RAYON_DETECTION = 8.0;
 export const RAYON_ABANDON = 12.0;
 export const RAYON_RECOLTE = 1.3;
