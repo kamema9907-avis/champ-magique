@@ -48,11 +48,17 @@ export function creerInterface({ surDemarrage }) {
   let niveau = Number(localStorage.getItem(R.CLE_NIVEAU)) || R.NIVEAU_DEFAUT;
   if (niveau < 1 || niveau > R.NIVEAUX_APPARITION.length) niveau = R.NIVEAU_DEFAUT;
 
+  let tableau = Number(localStorage.getItem(R.CLE_TABLEAU)) || 1;
+
   const boutons = new Map();
   const boutonsNiveau = new Map();
+  const boutonsTableau = new Map();
 
   /** Le tableau 2 est debloque des que le record du tableau 1 atteint le seuil. */
   const deverrouille = (nom) => records[nom].t1 >= R.SEUIL_TABLEAU_2;
+
+  // Un profil qui n'a pas debloque le tableau 2 demarre toujours sur le tableau 1.
+  if (!(tableau === 2 && deverrouille(joueur))) tableau = 1;
 
   /** Ce qu'on affiche sous un nom : cadenas avant deblocage, deux nombres apres. */
   function texteRecord(nom) {
@@ -79,6 +85,9 @@ export function creerInterface({ surDemarrage }) {
     joueur = nom;
     try { localStorage.setItem(R.CLE_DERNIER_JOUEUR, nom); } catch { /* ignore */ }
     for (const [autre, bouton] of boutons) bouton.classList.toggle('actif', autre === nom);
+    // Si le nouveau profil n'a pas debloque le tableau 2, on revient au tableau 1.
+    if (!(tableau === 2 && deverrouille(joueur))) tableau = 1;
+    dessinerTableaux();
     majRecordHud();
   }
 
@@ -101,6 +110,40 @@ export function creerInterface({ surDemarrage }) {
     niveau = n;
     try { localStorage.setItem(R.CLE_NIVEAU, String(n)); } catch { /* ignore */ }
     for (const [autre, bouton] of boutonsNiveau) bouton.classList.toggle('actif', autre === n);
+  }
+
+  const NOMS_TABLEAUX = ['Le Champ', 'Les Rochers'];
+
+  function dessinerTableaux() {
+    const conteneur = $('tableaux');
+    conteneur.innerHTML = '';
+    boutonsTableau.clear();
+    $('tableau-indice').textContent = '';
+    for (let t = 1; t <= 2; t++) {
+      const bouton = document.createElement('button');
+      const verrouille = t === 2 && !deverrouille(joueur);
+      bouton.className = 'tableau' + (t === tableau ? ' actif' : '') + (verrouille ? ' verrouille' : '');
+      bouton.innerHTML = `<span class="numero">${t}${verrouille ? ' 🔒' : ''}</span>` +
+                         `<span class="libelle">${NOMS_TABLEAUX[t - 1]}</span>`;
+      bouton.addEventListener('click', () => choisirTableau(t, verrouille));
+      conteneur.appendChild(bouton);
+      boutonsTableau.set(t, bouton);
+    }
+  }
+
+  function choisirTableau(t, verrouille) {
+    if (verrouille) {
+      // Cliquer sur un tableau verrouille ne le selectionne pas : ca explique
+      // seulement comment le debloquer.
+      $('tableau-indice').textContent =
+        `Fais ${R.SEUIL_TABLEAU_2} points au tableau 1 pour débloquer`;
+      return;
+    }
+    $('tableau-indice').textContent = '';
+    tableau = t;
+    try { localStorage.setItem(R.CLE_TABLEAU, String(t)); } catch { /* ignore */ }
+    for (const [autre, bouton] of boutonsTableau) bouton.classList.toggle('actif', autre === t);
+    majRecordHud();
   }
 
   /** Appui long de 2 s : remet a zero CE joueur seulement. Discret, jamais par accident. */
@@ -131,7 +174,7 @@ export function creerInterface({ surDemarrage }) {
   }
 
   function majRecordHud() {
-    $('record').textContent = `${joueur} · record ${records[joueur].t1}`;
+    $('record').textContent = `${joueur} · record ${records[joueur]['t' + tableau]}`;
   }
 
   const TEXTE_MENU = `
@@ -157,6 +200,7 @@ export function creerInterface({ surDemarrage }) {
     get joueur() { return joueur; },
     get record() { return records[joueur].t1; },
     get niveau() { return niveau; },
+    get tableau() { return tableau; },
 
     afficherMenu() {
       $('titre').textContent = 'LA RÉCOLTE DU CHAMP MAGIQUE';
@@ -168,6 +212,7 @@ export function creerInterface({ surDemarrage }) {
       $('score').textContent = 'Score : 0';
       $('chrono').textContent = '60';
       dessinerJoueurs();
+      dessinerTableaux();
       dessinerNiveaux();
       majRecordHud();
     },
@@ -197,6 +242,7 @@ export function creerInterface({ surDemarrage }) {
       $('joueurs-bloc').style.display = '';
       $('panneau').style.display = '';
       dessinerJoueurs();
+      dessinerTableaux();
       dessinerNiveaux();
       majRecordHud();
       return nouveau;

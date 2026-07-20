@@ -7,6 +7,11 @@
  */
 
 import { test, expect } from '@playwright/test';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const DOSSIER = path.dirname(fileURLToPath(import.meta.url));
+const CAPTURES = process.env.DOSSIER_CAPTURES || path.join(DOSSIER, 'captures');
 
 // Doit correspondre a R.CLE_STOCKAGE dans reglages.js.
 const CLE = 'champ-magique.records';
@@ -66,5 +71,33 @@ test('un petit score au tableau 1 quand on est deja debloque ne remontre pas le 
   const erreurs = await ouvrirAvecRecords(page, { 'Raphaël': { t1: 600, t2: 0 } });
   await page.evaluate(() => window.__test.afficherFin(300, 1));
   await expect(page.locator('.deblocage')).toHaveCount(0);
+  expect(erreurs).toEqual([]);
+});
+
+test('tableau 2 verrouille pour un profil neuf : cliquer montre l indice, sans le selectionner', async ({ page }) => {
+  const erreurs = await ouvrirAvecRecords(page, {});
+  const boutonT2 = page.locator('#tableaux .tableau').nth(1);
+  await expect(boutonT2).toHaveClass(/verrouille/);
+  await expect(boutonT2).toContainText('🔒');
+  await page.screenshot({ path: path.join(CAPTURES, 'test_6_menu_tableaux.png') });
+
+  await boutonT2.click();
+  await expect(page.locator('#tableau-indice')).toContainText('560');
+  await expect(boutonT2).not.toHaveClass(/actif/);
+  expect(erreurs).toEqual([]);
+});
+
+test('tableau 2 debloque : on le selectionne et une partie y demarre avec des rochers', async ({ page }) => {
+  const erreurs = await ouvrirAvecRecords(page, { 'Raphaël': { t1: 600, t2: 0 } });
+  const boutonT2 = page.locator('#tableaux .tableau').nth(1);
+  await expect(boutonT2).not.toHaveClass(/verrouille/);
+
+  await boutonT2.click();
+  await expect(boutonT2).toHaveClass(/actif/);
+
+  await page.locator('#action').click();
+  const etat = await page.evaluate(() => window.__test.etat());
+  expect(etat.tableau).toBe(2);
+  expect(etat.rochers).toBeGreaterThan(0);
   expect(erreurs).toEqual([]);
 });

@@ -145,7 +145,31 @@ html, body {
 .joueur.efface-fait { border-color: #ff6b6b; }
 @keyframes remplir { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
-/* --- Niveaux ------------------------------------------------------------ */
+/* --- Tableaux et niveaux ------------------------------------------------ */
+
+#tableau-bloc { margin-bottom: 1.4vh; }
+#tableaux { display: flex; gap: .7em; justify-content: center; flex-wrap: wrap; }
+
+.tableau {
+  display: flex; flex-direction: column; align-items: center; gap: .15em;
+  min-width: 6.4em;
+  padding: .55em 1em;
+  border: 2px solid #3c4a5a;
+  border-radius: .7em;
+  background: #1a222c;
+  color: #b9c7d6;
+  font: inherit;
+  font-size: clamp(12px, 1.5vw, 16px);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.tableau .numero { font-weight: 700; font-size: 1.15em; }
+.tableau .libelle { font-size: .8em; color: #7e8c9c; }
+.tableau.actif { border-color: #7dff9b; background: #16301f; color: #fff; }
+.tableau.actif .libelle { color: #7dff9b; }
+/* Tableau verrouille : visiblement inaccessible, mais cliquable pour l'indice. */
+.tableau.verrouille { opacity: .55; border-style: dashed; }
+#tableau-indice { min-height: 1.1em; color: #ffcf7e; }
 
 #niveau-bloc { margin-bottom: 2vh; }
 #niveaux { display: flex; gap: .7em; justify-content: center; flex-wrap: wrap; }
