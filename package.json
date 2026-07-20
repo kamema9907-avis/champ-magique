@@ -1,6 +1,6 @@
 {
   "name": "champ-magique",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "La Recolte du Champ Magique - jeu 3D pour iPad et PC",
   "scripts": {
     "dev": "vite",
