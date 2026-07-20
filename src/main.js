@@ -31,6 +31,9 @@ function demarrer() {
   // Le son doit etre debloque DANS le geste de l'utilisateur : c'est la seule
   // fenetre ou iOS l'autorise. Notre bouton "Commencer" en est un.
   sons.deverrouiller();
+  // Meme fenetre de geste utilisateur : si une manette de TV a ete reconnue, on
+  // engage le verrouillage du pointeur (curseur libere des bords et cache).
+  commandes.demanderVerrouillage();
   jeu.demarrerPartie(ui.niveau, ui.tableau);
 }
 

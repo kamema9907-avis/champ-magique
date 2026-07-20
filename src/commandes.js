@@ -74,10 +74,15 @@ export function creerCommandes({ canvas, camera, scene }) {
   let curseurPrec = null;                          // derniere position, pour le delta
   const mvtCurseur = { dx: 0, dy: 0, t: -1e9 };    // direction ecran du dernier mouvement
 
+  // Verrouillage du pointeur (Pointer Lock) : detache le curseur des bords de
+  // l'ecran, si bien que le pad continue d'envoyer des mouvements meme "au-dela"
+  // du bord (fini le curseur coince au bord qui fige le personnage), et le cache.
+  // On l'engage au demarrage de la partie et on le relache a la fin. S'il n'est
+  // pas supporte (incertain dans Silk), on garde le mode base sur clientX/Y.
+  let verrouille = false;
+
   function activerManette() {
     manette = true;
-    // On tente de masquer le curseur du navigateur : en mode directionnel, sa
-    // position ne veut plus rien dire, et le voir sortir du champ perturbe.
     document.body.style.cursor = 'none';
   }
   function desactiverManette() {
@@ -85,6 +90,21 @@ export function creerCommandes({ canvas, camera, scene }) {
     confianceManette = 0;
     document.body.style.cursor = '';
   }
+
+  function demanderVerrouillage() {
+    // Seulement pour une manette detectee : sur PC on ne capture pas la souris.
+    if (manette && !verrouille && canvas.requestPointerLock) {
+      try { canvas.requestPointerLock(); } catch { /* non supporte : on garde le repli */ }
+    }
+  }
+  function libererVerrouillage() {
+    if (document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
+  }
+  document.addEventListener('pointerlockchange', () => {
+    verrouille = document.pointerLockElement === canvas;
+    if (verrouille) activerManette();
+  });
+  document.addEventListener('pointerlockerror', () => { verrouille = false; });
 
   // Anneau pose au sol sous le curseur. Une commande a bascule n'est utilisable
   // que si son etat se voit : vert = il marche, gris = il est arrete.
@@ -124,7 +144,13 @@ export function creerCommandes({ canvas, camera, scene }) {
       return;
     }
     mode = 'pc';
-    if (e.button === 0) sourisActive = !sourisActive;   // bascule
+    if (e.button === 0) {
+      sourisActive = !sourisActive;   // bascule (mode souris PC)
+      // Si une manette a ete reconnue, la pression OK est un geste utilisateur
+      // valable pour engager le verrouillage du pointeur (repli si le demarrage
+      // ne l'a pas fait).
+      demanderVerrouillage();
+    }
   }
 
   function surPointerMove(e) {
@@ -138,9 +164,10 @@ export function creerCommandes({ canvas, camera, scene }) {
     souris.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
     // Delta du curseur : sert a reconnaitre la manette et a en tirer la direction.
-    if (curseurPrec) {
-      const ddx = e.clientX - curseurPrec.x;
-      const ddy = e.clientY - curseurPrec.y;
+    // Verrouille, clientX/Y sont figes : on lit movementX/Y, non bornes par l'ecran.
+    {
+      const ddx = verrouille ? e.movementX : (curseurPrec ? e.clientX - curseurPrec.x : 0);
+      const ddy = verrouille ? e.movementY : (curseurPrec ? e.clientY - curseurPrec.y : 0);
       const d = Math.hypot(ddx, ddy);
       if (d > 2) {   // on ignore le bruit sub-pixel
         // "Cardinal" = quasi purement horizontal ou vertical : la marque d'un
@@ -282,6 +309,8 @@ export function creerCommandes({ canvas, camera, scene }) {
   return {
     direction,
     majVisuels,
+    demanderVerrouillage,
+    libererVerrouillage,
     get mode() { return mode; },
     get sourisActive() { return sourisActive; },
     reinitialiser() { sourisActive = false; doigt = null; touches.clear(); },
