@@ -105,7 +105,9 @@ export const COULEURS = {
 // --- Tableau 2 : Les Rochers ----------------------------------------------
 // Deuxieme tableau, deverrouille par le record. De petits rochers servent
 // d'obstacles a contourner. Ces valeurs sont a ajuster en jouant.
-export const SEUIL_TABLEAU_2 = 560;              // record du tableau 1 requis pour debloquer
+// Deverrouillage EN CHAINE : le seuil d'indice i est le record a atteindre sur
+// le tableau (i+1) pour debloquer le tableau (i+2). Longueur = nb de tableaux - 1.
+export const SEUIL_DEBLOCAGE = [560, 560, 560];  // T1->T2, T2->T3, T3->T4
 export const NB_ROCHERS = [4, 8, 12];            // par niveau (Facile / Moyen / Difficile)
 export const ROCHER_RAYON_VISUEL = [0.8, 1.2];   // tirage aleatoire, pour varier les rochers
 export const ROCHER_RAYON_COLLISION = 1.3;       // joueur et Rodeurs sont bloques a ce rayon
