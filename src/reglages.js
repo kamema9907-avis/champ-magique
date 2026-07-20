@@ -106,6 +106,7 @@ export const ROCHER_RAYON_COLLISION = 1.3;       // joueur et Rodeurs sont bloqu
 export const ROCHER_DISTANCE_DEPART = 6.0;       // distance mini depuis le depart (0,0)
 export const ROCHER_DISTANCE_ENTRE = 8.0;        // distance mini entre deux rochers (pas de mur)
 export const ROCHER_EXCLUSION_PLANTE = 2.0;      // plantes/cristaux gardent cette distance du centre
+export const SOL_RELIEF_BUMP = 1.2;              // force du relief (bumpMap) du sol au tableau 2
 
 // Palette par tableau : [tableau 1, tableau 2]. Re-skin leger du tableau 2 :
 // meme geometrie, seules quelques couleurs changent pour signaler un autre lieu.

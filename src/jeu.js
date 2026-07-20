@@ -22,7 +22,7 @@ function versAngle(actuel, cible, pasMax) {
   return actuel + borner(ecart, -pasMax, pasMax);
 }
 
-export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage }) {
+export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, reliefSol }) {
   const joueur = batiJoueur();
   scene.add(joueur);
 
@@ -211,7 +211,15 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage })
     // le tableau 2 se sente comme un autre lieu (une recompense).
     tableauCourant = tableau;
     const palette = R.PALETTE_TABLEAU[tableau - 1] || R.PALETTE_TABLEAU[0];
-    if (sol) sol.material.color.setHex(palette.sol);
+    if (sol) {
+      sol.material.color.setHex(palette.sol);
+      // Texture et relief n'apparaissent qu'au tableau 2 ; le tableau 1 reste lisse.
+      const releve = tableau === 2;
+      sol.material.map = releve ? reliefSol.couleur : null;
+      sol.material.bumpMap = releve ? reliefSol.bump : null;
+      sol.material.bumpScale = R.SOL_RELIEF_BUMP;
+      sol.material.needsUpdate = true;   // changer une carte recompile le shader
+    }
     if (feuillage) feuillage.color.setHex(palette.feuille);
     scene.background.setHex(palette.ciel);
 
