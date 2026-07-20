@@ -75,7 +75,8 @@ export function creerMonde() {
   sol.receiveShadow = true;
   scene.add(sol);
 
-  scene.add(batirArbres());
+  const arbres = batirArbres();
+  scene.add(arbres);
 
   scene.add(new THREE.HemisphereLight(0xbfe3ff, 0x5aa02c, 1.1));
 
@@ -104,5 +105,7 @@ export function creerMonde() {
   // l'orientation reste juste, et la camera ne tourne jamais.
   camera.lookAt(0, 0, 0);
 
-  return { scene, camera, soleil, sol };
+  // Le feuillage (2e enfant du groupe : troncs d'abord, feuilles ensuite) est
+  // renvoye pour pouvoir le re-teinter selon le tableau.
+  return { scene, camera, soleil, sol, feuillage: arbres.children[1].material };
 }

@@ -22,7 +22,7 @@ function versAngle(actuel, cible, pasMax) {
   return actuel + borner(ecart, -pasMax, pasMax);
 }
 
-export function creerJeu({ scene, camera, commandes, sons, ui, sol }) {
+export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage }) {
   const joueur = batiJoueur();
   scene.add(joueur);
 
@@ -212,6 +212,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol }) {
     tableauCourant = tableau;
     const palette = R.PALETTE_TABLEAU[tableau - 1] || R.PALETTE_TABLEAU[0];
     if (sol) sol.material.color.setHex(palette.sol);
+    if (feuillage) feuillage.color.setHex(palette.feuille);
     scene.background.setHex(palette.ciel);
 
     score = 0;

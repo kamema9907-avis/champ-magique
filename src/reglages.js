@@ -110,8 +110,8 @@ export const ROCHER_EXCLUSION_PLANTE = 2.0;      // plantes/cristaux gardent cet
 // Palette par tableau : [tableau 1, tableau 2]. Re-skin leger du tableau 2 :
 // meme geometrie, seules quelques couleurs changent pour signaler un autre lieu.
 export const PALETTE_TABLEAU = [
-  { sol: COULEURS.sol, ciel: COULEURS.ciel },
-  { sol: 0x9c7a4d, ciel: 0xcbb28f },             // sol aride, ciel chaud
+  { sol: COULEURS.sol, ciel: COULEURS.ciel, feuille: COULEURS.feuille },
+  { sol: 0x9c7a4d, ciel: 0xcbb28f, feuille: 0xcf7a33 },   // sol aride, ciel chaud, arbres orangés
 ];
 
 // --- Profils --------------------------------------------------------------
