@@ -13,6 +13,7 @@ import { creerSons } from './sons.js';
 import { creerInterface } from './interface.js';
 import { creerJeu } from './jeu.js';
 import { brancherPiloteAuto } from './pilote-auto.js';
+import { brancherDebug } from './debug.js';
 
 const canvas = document.getElementById('scene');
 const rendu = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -80,4 +81,5 @@ function boucle(maintenant) {
 
 ui.afficherMenu();
 brancherPiloteAuto({ jeu, commandes, ui, sons, camera });
+if (new URLSearchParams(location.search).has('debug')) brancherDebug();
 requestAnimationFrame(boucle);
