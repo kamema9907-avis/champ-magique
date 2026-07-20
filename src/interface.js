@@ -11,19 +11,28 @@ import * as R from './reglages.js';
 
 const $ = (id) => document.getElementById(id);
 
-// Un record par tableau et par joueur : { t1, t2 }.
-const recordVide = () => ({ t1: 0, t2: 0 });
+// Un record par tableau et par joueur : { t1, t2, ... }. Autant de tableaux que
+// de palettes definies dans reglages.
+const NB_TABLEAUX = R.PALETTE_TABLEAU.length;
+const recordVide = () => {
+  const rec = {};
+  for (let t = 1; t <= NB_TABLEAUX; t++) rec['t' + t] = 0;
+  return rec;
+};
 
 function chargerRecords() {
   try {
     const brut = JSON.parse(localStorage.getItem(R.CLE_STOCKAGE) || '{}');
     const records = {};
     for (const nom of R.JOUEURS) {
+      const rec = recordVide();
       const v = brut[nom];
-      // Migration : l'ancien format (v1.0) stockait un simple nombre, qui etait
-      // le record du tableau 1. On le reprend tel quel pour ne rien perdre.
-      if (typeof v === 'number') records[nom] = { t1: v, t2: 0 };
-      else records[nom] = { t1: Number(v && v.t1) || 0, t2: Number(v && v.t2) || 0 };
+      // Migration : l'ancien format (v1.0) stockait un simple nombre = record du
+      // tableau 1 ; les versions suivantes stockent { t1, t2, ... }. On reprend
+      // ce qu'on trouve, les tableaux absents restant a zero.
+      if (typeof v === 'number') rec.t1 = v;
+      else if (v) for (let t = 1; t <= NB_TABLEAUX; t++) rec['t' + t] = Number(v['t' + t]) || 0;
+      records[nom] = rec;
     }
     return records;
   } catch {
@@ -54,16 +63,17 @@ export function creerInterface({ surDemarrage }) {
   const boutonsNiveau = new Map();
   const boutonsTableau = new Map();
 
-  /** Le tableau 2 est debloque des que le record du tableau 1 atteint le seuil. */
-  const deverrouille = (nom) => records[nom].t1 >= R.SEUIL_TABLEAU_2;
+  // Deverrouillage EN CHAINE : le tableau t (t >= 2) s'ouvre quand le record du
+  // tableau PRECEDENT atteint le seuil. Le tableau 1 est toujours ouvert.
+  const deverrouille = (nom, t) => t <= 1 || records[nom]['t' + (t - 1)] >= R.SEUIL_DEBLOCAGE[t - 2];
 
-  // Un profil qui n'a pas debloque le tableau 2 demarre toujours sur le tableau 1.
-  if (!(tableau === 2 && deverrouille(joueur))) tableau = 1;
+  // Un profil qui n'a pas debloque le tableau selectionne demarre au tableau 1.
+  if (!deverrouille(joueur, tableau)) tableau = 1;
 
-  /** Ce qu'on affiche sous un nom : cadenas avant deblocage, deux nombres apres. */
+  /** Sous un nom : le record du tableau SELECTIONNE (ou un cadenas s'il est verrouille). */
   function texteRecord(nom) {
-    const rec = records[nom];
-    return deverrouille(nom) ? `T1 ${rec.t1} · T2 ${rec.t2}` : `${rec.t1} · 🔒`;
+    if (!deverrouille(nom, tableau)) return `T${tableau} 🔒`;
+    return `T${tableau} ${records[nom]['t' + tableau]}`;
   }
 
   function dessinerJoueurs() {
@@ -85,8 +95,8 @@ export function creerInterface({ surDemarrage }) {
     joueur = nom;
     try { localStorage.setItem(R.CLE_DERNIER_JOUEUR, nom); } catch { /* ignore */ }
     for (const [autre, bouton] of boutons) bouton.classList.toggle('actif', autre === nom);
-    // Si le nouveau profil n'a pas debloque le tableau 2, on revient au tableau 1.
-    if (!(tableau === 2 && deverrouille(joueur))) tableau = 1;
+    // Si le nouveau profil n'a pas debloque le tableau selectionne, retour au 1.
+    if (!deverrouille(joueur, tableau)) tableau = 1;
     dessinerTableaux();
     majRecordHud();
   }
@@ -112,19 +122,19 @@ export function creerInterface({ surDemarrage }) {
     for (const [autre, bouton] of boutonsNiveau) bouton.classList.toggle('actif', autre === n);
   }
 
-  const NOMS_TABLEAUX = ['Le Champ', 'Les Rochers'];
+  const NOMS_TABLEAUX = ['Le Champ', 'Les Rochers', 'Forêt Gelée', 'Terres de Feu'];
 
   function dessinerTableaux() {
     const conteneur = $('tableaux');
     conteneur.innerHTML = '';
     boutonsTableau.clear();
     $('tableau-indice').textContent = '';
-    for (let t = 1; t <= 2; t++) {
+    for (let t = 1; t <= NB_TABLEAUX; t++) {
       const bouton = document.createElement('button');
-      const verrouille = t === 2 && !deverrouille(joueur);
+      const verrouille = !deverrouille(joueur, t);
       bouton.className = 'tableau' + (t === tableau ? ' actif' : '') + (verrouille ? ' verrouille' : '');
       bouton.innerHTML = `<span class="numero">${t}${verrouille ? ' 🔒' : ''}</span>` +
-                         `<span class="libelle">${NOMS_TABLEAUX[t - 1]}</span>`;
+                         `<span class="libelle">${NOMS_TABLEAUX[t - 1] || `Tableau ${t}`}</span>`;
       bouton.addEventListener('click', () => choisirTableau(t, verrouille));
       conteneur.appendChild(bouton);
       boutonsTableau.set(t, bouton);
@@ -134,15 +144,17 @@ export function creerInterface({ surDemarrage }) {
   function choisirTableau(t, verrouille) {
     if (verrouille) {
       // Cliquer sur un tableau verrouille ne le selectionne pas : ca explique
-      // seulement comment le debloquer.
+      // seulement comment le debloquer (par un bon score au tableau precedent).
       $('tableau-indice').textContent =
-        `Fais ${R.SEUIL_TABLEAU_2} points au tableau 1 pour débloquer`;
+        `Fais ${R.SEUIL_DEBLOCAGE[t - 2]} points au tableau ${t - 1} pour débloquer`;
       return;
     }
     $('tableau-indice').textContent = '';
     tableau = t;
     try { localStorage.setItem(R.CLE_TABLEAU, String(t)); } catch { /* ignore */ }
     for (const [autre, bouton] of boutonsTableau) bouton.classList.toggle('actif', autre === t);
+    // Les profils affichent le record du tableau SELECTIONNE : on les redessine.
+    dessinerJoueurs();
     majRecordHud();
   }
 
@@ -152,8 +164,8 @@ export function creerInterface({ surDemarrage }) {
     const demarrer = () => {
       bouton.classList.add('efface');
       minuteur = setTimeout(() => {
-        // Efface les DEUX records : ca re-verrouille le tableau 2 (le record du
-        // tableau 1 retombe sous le seuil), exactement l'effet attendu.
+        // Efface TOUS les records du joueur : ca re-verrouille toute la chaine
+        // de tableaux (les records retombent sous les seuils), l'effet attendu.
         records[nom] = recordVide();
         sauverRecords(records);
         bouton.querySelector('.record').textContent = texteRecord(nom);
@@ -220,20 +232,22 @@ export function creerInterface({ surDemarrage }) {
     afficherFin(score, tableau = 1) {
       const cle = 't' + tableau;
       const rec = records[joueur];
-      // Le deblocage se calcule sur le tableau 1 : on compare avant/apres pour
-      // savoir si CE score vient de franchir le seuil pour la premiere fois.
-      const etaitDeverrouille = deverrouille(joueur);
+      // Deblocage EN CHAINE : ce score peut ouvrir le tableau SUIVANT. On compare
+      // avant/apres pour ne feter le deblocage qu'a la premiere fois.
+      const suivant = tableau + 1;
+      const suivantExiste = suivant <= NB_TABLEAUX;
+      const etaitDeverrouille = suivantExiste && deverrouille(joueur, suivant);
       const nouveau = score > rec[cle];
       if (nouveau) {
         rec[cle] = score;
         sauverRecords(records);
       }
-      const vientDeDebloquer = !etaitDeverrouille && deverrouille(joueur);
+      const vientDeDebloquer = suivantExiste && !etaitDeverrouille && deverrouille(joueur, suivant);
 
       $('titre').textContent = nouveau ? 'NOUVEAU RECORD !' : 'Temps écoulé !';
       $('titre').className = nouveau ? 'record-battu' : '';
       const messageDeblocage = vientDeDebloquer
-        ? '<p class="deblocage">🎉 Tableau 2 débloqué !</p>' : '';
+        ? `<p class="deblocage">🎉 « ${NOMS_TABLEAUX[suivant - 1]} » débloqué !</p>` : '';
       $('corps').innerHTML = `
         <p class="score-final">${score} points</p>
         ${messageDeblocage}

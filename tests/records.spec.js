@@ -34,36 +34,55 @@ function recordDe(page, nom) {
   return page.locator('.joueur', { hasText: nom }).locator('.record');
 }
 
-test('migration : un ancien record numerique devient le record du tableau 1, verrouille', async ({ page }) => {
+test('migration : un ancien record numerique devient le record du tableau 1', async ({ page }) => {
   const erreurs = await ouvrirAvecRecords(page, { 'Raphaël': 45 });
-  const texte = await recordDe(page, 'Raphaël').textContent();
-  expect(texte).toContain('45');       // repris tel quel comme record du tableau 1
-  expect(texte).toContain('🔒');       // 45 < 560 : tableau 2 verrouille
+  // Tableau 1 selectionne par defaut : le profil montre le record repris.
+  expect(await recordDe(page, 'Raphaël').textContent()).toContain('45');
+  // Le tableau 2 reste verrouille (45 < 560).
+  await expect(page.locator('#tableaux .tableau').nth(1)).toHaveClass(/verrouille/);
   expect(erreurs).toEqual([]);
 });
 
-test('un record t1 >= 560 debloque : deux nombres au lieu du cadenas', async ({ page }) => {
+test('un record t1 >= 560 debloque le tableau 2, dont le record s affiche a la selection', async ({ page }) => {
   const erreurs = await ouvrirAvecRecords(page, { 'Raphaël': { t1: 600, t2: 120 } });
-  const texte = await recordDe(page, 'Raphaël').textContent();
-  expect(texte).toContain('T1 600');
-  expect(texte).toContain('T2 120');
-  expect(texte).not.toContain('🔒');
+  // Tableau 1 selectionne : profil montre T1 600.
+  expect(await recordDe(page, 'Raphaël').textContent()).toContain('T1 600');
+  const boutonT2 = page.locator('#tableaux .tableau').nth(1);
+  await expect(boutonT2).not.toHaveClass(/verrouille/);
+  // On selectionne le tableau 2 : les profils montrent alors leur record T2.
+  await boutonT2.click();
+  expect(await recordDe(page, 'Raphaël').textContent()).toContain('T2 120');
   expect(erreurs).toEqual([]);
 });
 
-test('franchir 560 affiche le message de deblocage; un score au tableau 2 met a jour le record t2', async ({ page }) => {
+test('franchir le seuil affiche le message; un score au tableau 2 met a jour le record t2', async ({ page }) => {
   const erreurs = await ouvrirAvecRecords(page, { 'Raphaël': 559 });
 
   // Fin d'une partie tableau 1 avec un score qui franchit le seuil pour la 1re fois.
   await page.evaluate(() => window.__test.afficherFin(560, 1));
-  await expect(page.locator('.deblocage')).toHaveText(/Tableau 2 débloqué/);
-  expect(await recordDe(page, 'Raphaël').textContent()).toContain('T1 560');
+  await expect(page.locator('.deblocage')).toContainText('débloqué');
 
-  // Un score au tableau 2 met a jour le record t2, sans re-afficher le deblocage.
+  // On selectionne le tableau 2 (desormais ouvert) et on y termine une partie.
+  await page.locator('#tableaux .tableau').nth(1).click();
   await page.evaluate(() => window.__test.afficherFin(200, 2));
-  await expect(page.locator('.deblocage')).toHaveCount(0);
+  await expect(page.locator('.deblocage')).toHaveCount(0);   // 200 < 560 : n'ouvre pas le T3
   expect(await recordDe(page, 'Raphaël').textContent()).toContain('T2 200');
 
+  expect(erreurs).toEqual([]);
+});
+
+test('deverrouillage en chaine : un T2 atteint ouvre le tableau 3, pas encore le 4', async ({ page }) => {
+  const erreurs = await ouvrirAvecRecords(page, { 'Raphaël': { t1: 600, t2: 600 } });
+  await expect(page.locator('#tableaux .tableau').nth(2)).not.toHaveClass(/verrouille/);  // T3 ouvert
+  await expect(page.locator('#tableaux .tableau').nth(3)).toHaveClass(/verrouille/);       // T4 ferme
+  expect(erreurs).toEqual([]);
+});
+
+test('un bon score au tableau 2 debloque le tableau 3 (message avec son nom)', async ({ page }) => {
+  const erreurs = await ouvrirAvecRecords(page, { 'Raphaël': { t1: 600, t2: 559 } });
+  await page.evaluate(() => window.__test.afficherFin(560, 2));
+  await expect(page.locator('.deblocage')).toContainText('Forêt Gelée');
+  await expect(page.locator('#tableaux .tableau').nth(2)).not.toHaveClass(/verrouille/);
   expect(erreurs).toEqual([]);
 });
 

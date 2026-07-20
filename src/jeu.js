@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import * as R from './reglages.js';
 import { TYPES_PLANTES, TYPE_CRISTAL, typeAuHasard } from './plantes.js';
 import { batiJoueur, batiEnnemi } from './personnages.js';
-import { batiRocher } from './rochers.js';
+import { batiObstacle } from './rochers.js';
 
 const auHasard = (min, max) => min + Math.random() * (max - min);
 const borner = (v, min, max) => Math.min(max, Math.max(min, v));
@@ -101,7 +101,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
    * rocher ne le fasse jamais buter contre le mur invisible (sinon il pourrait
    * se retrouver coince dans le rocher, dans un coin du champ).
    */
-  function placerRochers(nombre) {
+  function placerRochers(nombre, tableau) {
     const limite = R.DEMI_CHAMP - R.MARGE_JOUEUR - R.ROCHER_RAYON_COLLISION - 0.5;
     for (let i = 0; i < nombre; i++) {
       for (let essai = 0; essai < 60; essai++) {
@@ -116,7 +116,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
           }
         }
         if (tropPres) continue;
-        const rocher = batiRocher(auHasard(...R.ROCHER_RAYON_VISUEL));
+        const rocher = batiObstacle(tableau, auHasard(...R.ROCHER_RAYON_VISUEL));
         rocher.position.x = x;
         rocher.position.z = z;
         scene.add(rocher);
@@ -215,8 +215,8 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
     const palette = R.PALETTE_TABLEAU[tableau - 1] || R.PALETTE_TABLEAU[0];
     if (sol) {
       sol.material.color.setHex(palette.sol);
-      // Texture et relief n'apparaissent qu'au tableau 2 ; le tableau 1 reste lisse.
-      const releve = tableau === 2;
+      // Texture et relief pour tous les tableaux >= 2 ; le tableau 1 reste lisse.
+      const releve = tableau >= 2;
       sol.material.map = releve ? reliefSol.couleur : null;
       sol.material.bumpMap = releve ? reliefSol.bump : null;
       sol.material.bumpScale = R.SOL_RELIEF_BUMP;
@@ -238,8 +238,8 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
     joueur.userData.materiaux[0].color.setHex(R.COULEURS.salopette);
     camera.position.set(R.DECALAGE_CAMERA.x, R.DECALAGE_CAMERA.y, R.DECALAGE_CAMERA.z);
 
-    // Les rochers d'abord : plantes, cristaux et Rodeurs les eviteront ensuite.
-    if (tableau === 2) placerRochers(R.NB_ROCHERS[niveau - 1] || 0);
+    // Les obstacles d'abord : plantes, cristaux et Rodeurs les eviteront ensuite.
+    if (tableau >= 2) placerRochers(R.NB_ROCHERS[niveau - 1] || 0, tableau);
 
     for (let i = 0; i < R.NB_PLANTES; i++) creerPlante();
 

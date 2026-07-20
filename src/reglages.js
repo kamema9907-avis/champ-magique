@@ -97,12 +97,17 @@ export const COULEURS = {
   paille: 0xe8c56a,
   degat: 0xff4444,
   rocher: 0x8a8577,
+  glace: 0xbfe6f5,   // blocs de glace, tableau 3
+  lave: 0x40201c,    // rochers de lave, tableau 4 (la lueur est ajoutee en emissive)
+  laveLueur: 0x8a1e00,
 };
 
 // --- Tableau 2 : Les Rochers ----------------------------------------------
 // Deuxieme tableau, deverrouille par le record. De petits rochers servent
 // d'obstacles a contourner. Ces valeurs sont a ajuster en jouant.
-export const SEUIL_TABLEAU_2 = 560;              // record du tableau 1 requis pour debloquer
+// Deverrouillage EN CHAINE : le seuil d'indice i est le record a atteindre sur
+// le tableau (i+1) pour debloquer le tableau (i+2). Longueur = nb de tableaux - 1.
+export const SEUIL_DEBLOCAGE = [560, 560, 560];  // T1->T2, T2->T3, T3->T4
 export const NB_ROCHERS = [4, 8, 12];            // par niveau (Facile / Moyen / Difficile)
 export const ROCHER_RAYON_VISUEL = [0.8, 1.2];   // tirage aleatoire, pour varier les rochers
 export const ROCHER_RAYON_COLLISION = 1.3;       // joueur et Rodeurs sont bloques a ce rayon
@@ -111,11 +116,13 @@ export const ROCHER_DISTANCE_ENTRE = 8.0;        // distance mini entre deux roc
 export const ROCHER_EXCLUSION_PLANTE = 2.0;      // plantes/cristaux gardent cette distance du centre
 export const SOL_RELIEF_BUMP = 1.2;              // force du relief (bumpMap) du sol au tableau 2
 
-// Palette par tableau : [tableau 1, tableau 2]. Re-skin leger du tableau 2 :
-// meme geometrie, seules quelques couleurs changent pour signaler un autre lieu.
+// Palette par tableau. Meme geometrie partout, seules les couleurs changent pour
+// signaler un autre lieu. Le sol des tableaux >= 2 recoit aussi la texture de relief.
 export const PALETTE_TABLEAU = [
-  { sol: COULEURS.sol, ciel: COULEURS.ciel, feuille: COULEURS.feuille },
-  { sol: 0x9c7a4d, ciel: 0xcbb28f, feuille: 0xcf7a33 },   // sol aride, ciel chaud, arbres orangés
+  { sol: COULEURS.sol, ciel: COULEURS.ciel, feuille: COULEURS.feuille },   // 1 Le Champ
+  { sol: 0x9c7a4d, ciel: 0xcbb28f, feuille: 0xcf7a33 },   // 2 Les Rochers : aride, chaud, orangé
+  { sol: 0xcdddea, ciel: 0xb9cdd8, feuille: 0xa9d2ea },   // 3 Forêt Gelée : neige, ciel froid, givre
+  { sol: 0x4a3a36, ciel: 0x7a3028, feuille: 0x3a2420 },   // 4 Terres de Feu : sol sombre, ciel rouge
 ];
 
 // --- Profils --------------------------------------------------------------
