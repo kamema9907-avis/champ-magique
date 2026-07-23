@@ -215,10 +215,10 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
     const palette = R.PALETTE_TABLEAU[tableau - 1] || R.PALETTE_TABLEAU[0];
     if (sol) {
       sol.material.color.setHex(palette.sol);
-      // Texture et relief pour tous les tableaux >= 2 ; le tableau 1 reste lisse.
-      const releve = tableau >= 2;
-      sol.material.map = releve ? reliefSol.couleur : null;
-      sol.material.bumpMap = releve ? reliefSol.bump : null;
+      // Texture et relief sur TOUS les tableaux : la texture est en niveaux de
+      // gris, elle prend la teinte du sol courant (herbe, roche, neige, lave...).
+      sol.material.map = reliefSol.couleur;
+      sol.material.bumpMap = reliefSol.bump;
       sol.material.bumpScale = R.SOL_RELIEF_BUMP;
       sol.material.needsUpdate = true;   // changer une carte recompile le shader
     }

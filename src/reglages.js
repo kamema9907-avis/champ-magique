@@ -123,7 +123,7 @@ export const ROCHER_EXCLUSION_PLANTE = 2.0;      // plantes/cristaux gardent cet
 export const SOL_RELIEF_BUMP = 1.2;              // force du relief (bumpMap) du sol au tableau 2
 
 // Palette par tableau. Meme geometrie partout, seules les couleurs changent pour
-// signaler un autre lieu. Le sol des tableaux >= 2 recoit aussi la texture de relief.
+// signaler un autre lieu. Le sol de tous les tableaux recoit la texture de relief.
 export const PALETTE_TABLEAU = [
   { sol: COULEURS.sol, ciel: COULEURS.ciel, feuille: COULEURS.feuille },   // 1 Le Champ
   { sol: 0x9c7a4d, ciel: 0xcbb28f, feuille: 0xcf7a33 },   // 2 Les Rochers : aride, chaud, orangé
