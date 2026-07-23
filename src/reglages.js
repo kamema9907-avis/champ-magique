@@ -35,6 +35,15 @@ export const CRISTAL_PREMIER_DELAI = 8.0;
 export const CRISTAL_DELAI = [9.0, 14.0];
 export const CRISTAL_DISTANCE_MINI = 15.0;
 
+// --- Champignon bonus -----------------------------------------------------
+// Un champignon apparait UNE fois, a un instant aleatoire (secondes ecoulees),
+// se deplace en flanant comme un Rodeur (mais ne poursuit pas), et donne un
+// bonus de temps s'il est attrape. Vaut pour tous les tableaux et niveaux.
+export const CHAMPIGNON_FENETRE = [20.0, 40.0];   // instant d'apparition (ecoule)
+export const CHAMPIGNON_DUREE_VIE = 8.0;          // secondes avant de disparaitre
+export const CHAMPIGNON_VITESSE = 3.0;            // deplacement, attrapable (< joueur)
+export const CHAMPIGNON_BONUS = 5.0;              // secondes ajoutees au chrono
+
 // Apparition des Rodeurs, en secondes ECOULEES depuis le debut de la partie.
 // Un tableau par niveau de difficulte. Le Rodeur a 0 s est toujours la; chaque
 // niveau ajoute des vagues. Le niveau 1 reproduit l'original (un 2e Rodeur a
@@ -106,6 +115,10 @@ export const COULEURS = {
   glace: 0xbfe6f5,   // blocs de glace, tableau 3
   lave: 0x40201c,    // rochers de lave, tableau 4 (la lueur est ajoutee en emissive)
   laveLueur: 0x8a1e00,
+  // Champignon bonus : rose vif, distinct des Rodeurs (rouge) et des plantes.
+  champignonChapeau: 0xff5fa8,
+  champignonPied: 0xf3e9d2,
+  champignonPois: 0xffffff,
 };
 
 // --- Tableau 2 : Les Rochers ----------------------------------------------

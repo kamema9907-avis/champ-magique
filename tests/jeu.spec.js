@@ -41,6 +41,9 @@ test('une partie complete se joue et le score reste dans la fourchette de jeux_1
 
   await page.evaluate(() => window.__test.cristalTot());
   await page.evaluate(() => window.__test.demarrer());
+  // Le champignon bonus ajoute +5 s a la capture : on le desactive ici pour
+  // garder l'invariant deterministe (exactement 3600 pas). Il est teste a part.
+  await page.evaluate(() => window.__test.desactiverChampignon());
 
   // Le jeu se fige tout seul a l'apparition du cristal, donc la capture ne peut
   // pas arriver trop tard, quelle que soit la lenteur de la machine.
@@ -164,3 +167,25 @@ for (const { tableau, nom } of [{ tableau: 3, nom: 'foret_gelee' }, { tableau: 4
     expect(erreurs).toEqual([]);
   });
 }
+
+test('champignon bonus : apparait et donne +5 s a la capture', async ({ page }) => {
+  test.setTimeout(30_000);
+  // Sans pilote (?test seul) : le joueur reste immobile, donc pas de capture
+  // accidentelle avant celle qu'on declenche.
+  const erreurs = await ouvrir(page, '?test');
+  await page.evaluate(() => window.__test.demarrer());
+  // Apres demarrer (qui tire une heure aleatoire), on force l'apparition tot.
+  await page.evaluate(() => window.__test.champignonTot());
+
+  await page.waitForFunction(() => window.__test.etat().champignon, { timeout: 15_000 });
+  await page.screenshot({ path: path.join(CAPTURES, 'test_7_champignon.png') });
+
+  const avant = await page.evaluate(() => window.__test.etat().chrono);
+  await page.evaluate(() => window.__test.capturerChampignon());
+  const apres = await page.evaluate(() => window.__test.etat().chrono);
+
+  expect(await page.evaluate(() => window.__test.etat().champignon)).toBe(false);   // consomme
+  expect(apres - avant).toBeGreaterThanOrEqual(4);   // +5 s (tolerance de l'arrondi)
+
+  expect(erreurs).toEqual([]);
+});

@@ -69,6 +69,15 @@ flèche revient en mode PC.
 | Étoile-de-feu | orange | 10 |
 | Cristal-lune | cyan lumineux | 25, et seulement 8 secondes |
 
+### Le champignon bonus
+
+Un **champignon rose** (couleur distincte des Rôdeurs et des plantes) apparaît
+**une fois par partie**, à un instant aléatoire, et **se déplace** en flânant
+comme un Rôdeur (mais il ne poursuit pas). Il ne reste que **8 secondes**. Si on
+l'attrape, il donne un **bonus de +5 secondes** au chrono, avec son propre son.
+Valable sur tous les tableaux et niveaux. Réglages : `CHAMPIGNON_*` dans
+[`src/reglages.js`](src/reglages.js).
+
 ### Les profils
 
 Trois joueurs (**Raphaël, Papi, Invité**), chacun avec **son propre record**,
