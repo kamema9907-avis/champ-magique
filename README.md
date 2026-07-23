@@ -101,6 +101,12 @@ le dernier joueur. Les calendriers d'apparition (`NIVEAUX_APPARITION`) et les
 facteurs de vitesse (`VITESSE_ENNEMI_NIVEAU`) sont dans
 [`src/reglages.js`](src/reglages.js).
 
+Les niveaux se **débloquent aussi en chaîne**, tableau par tableau et par profil,
+selon le record du profil **sur ce tableau** (`SEUIL_NIVEAU`) : Facile ouvert
+d'emblée, **Moyen à 460**, **Difficile à 510**. Combiné au seuil des tableaux, on
+obtient une échelle par tableau : 460 → Moyen, 510 → Difficile, 560 → tableau
+suivant. Un cadenas marque les niveaux encore verrouillés.
+
 ### Les tableaux à débloquer
 
 Au-delà du **Champ** (tableau 1), trois tableaux se débloquent en récompense,

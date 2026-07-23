@@ -191,6 +191,8 @@ html, body {
 .niveau .libelle { font-size: .8em; color: #7e8c9c; }
 .niveau.actif { border-color: #7dff9b; background: #16301f; color: #fff; }
 .niveau.actif .libelle { color: #7dff9b; }
+.niveau.verrouille { opacity: .55; border-style: dashed; }
+#niveau-indice { min-height: 1.1em; color: #ffcf7e; }
 
 #action {
   padding: .7em 1.8em;

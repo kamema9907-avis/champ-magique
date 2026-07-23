@@ -67,8 +67,13 @@ export function creerInterface({ surDemarrage }) {
   // tableau PRECEDENT atteint le seuil. Le tableau 1 est toujours ouvert.
   const deverrouille = (nom, t) => t <= 1 || records[nom]['t' + (t - 1)] >= R.SEUIL_DEBLOCAGE[t - 2];
 
-  // Un profil qui n'a pas debloque le tableau selectionne demarre au tableau 1.
+  // Deverrouillage des NIVEAUX dans un tableau : le niveau n s'ouvre quand le
+  // record du profil SUR CE TABLEAU atteint le seuil (Facile, seuil 0, toujours ouvert).
+  const niveauDeverrouille = (nom, t, n) => records[nom]['t' + t] >= R.SEUIL_NIVEAU[n - 1];
+
+  // Un profil repart au minimum accessible pour le tableau/niveau selectionne.
   if (!deverrouille(joueur, tableau)) tableau = 1;
+  if (!niveauDeverrouille(joueur, tableau, niveau)) niveau = 1;
 
   /** Sous un nom : le record du tableau SELECTIONNE (ou un cadenas s'il est verrouille). */
   function texteRecord(nom) {
@@ -95,9 +100,11 @@ export function creerInterface({ surDemarrage }) {
     joueur = nom;
     try { localStorage.setItem(R.CLE_DERNIER_JOUEUR, nom); } catch { /* ignore */ }
     for (const [autre, bouton] of boutons) bouton.classList.toggle('actif', autre === nom);
-    // Si le nouveau profil n'a pas debloque le tableau selectionne, retour au 1.
+    // Le nouveau profil peut avoir moins de tableaux/niveaux debloques : on borne.
     if (!deverrouille(joueur, tableau)) tableau = 1;
+    if (!niveauDeverrouille(joueur, tableau, niveau)) niveau = 1;
     dessinerTableaux();
+    dessinerNiveaux();
     majRecordHud();
   }
 
@@ -105,18 +112,28 @@ export function creerInterface({ surDemarrage }) {
     const conteneur = $('niveaux');
     conteneur.innerHTML = '';
     boutonsNiveau.clear();
+    $('niveau-indice').textContent = '';
     for (let n = 1; n <= R.NIVEAUX_APPARITION.length; n++) {
       const bouton = document.createElement('button');
-      bouton.className = 'niveau' + (n === niveau ? ' actif' : '');
+      const verrouille = !niveauDeverrouille(joueur, tableau, n);
+      bouton.className = 'niveau' + (n === niveau ? ' actif' : '') + (verrouille ? ' verrouille' : '');
       const nom = NOMS_NIVEAUX[n - 1] || `Niveau ${n}`;
-      bouton.innerHTML = `<span class="numero">${n}</span><span class="libelle">${nom}</span>`;
-      bouton.addEventListener('click', () => choisirNiveau(n));
+      bouton.innerHTML = `<span class="numero">${n}${verrouille ? ' 🔒' : ''}</span>` +
+                         `<span class="libelle">${nom}</span>`;
+      bouton.addEventListener('click', () => choisirNiveau(n, verrouille));
       conteneur.appendChild(bouton);
       boutonsNiveau.set(n, bouton);
     }
   }
 
-  function choisirNiveau(n) {
+  function choisirNiveau(n, verrouille) {
+    if (verrouille) {
+      // Verrouille : on n'ouvre pas, on explique comment le debloquer.
+      $('niveau-indice').textContent =
+        `Fais ${R.SEUIL_NIVEAU[n - 1]} points à ce tableau pour débloquer`;
+      return;
+    }
+    $('niveau-indice').textContent = '';
     niveau = n;
     try { localStorage.setItem(R.CLE_NIVEAU, String(n)); } catch { /* ignore */ }
     for (const [autre, bouton] of boutonsNiveau) bouton.classList.toggle('actif', autre === n);
@@ -153,8 +170,11 @@ export function creerInterface({ surDemarrage }) {
     tableau = t;
     try { localStorage.setItem(R.CLE_TABLEAU, String(t)); } catch { /* ignore */ }
     for (const [autre, bouton] of boutonsTableau) bouton.classList.toggle('actif', autre === t);
+    // Les niveaux debloques dependent du record de CE tableau : on borne et on redessine.
+    if (!niveauDeverrouille(joueur, tableau, niveau)) niveau = 1;
     // Les profils affichent le record du tableau SELECTIONNE : on les redessine.
     dessinerJoueurs();
+    dessinerNiveaux();
     majRecordHud();
   }
 

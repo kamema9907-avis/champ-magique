@@ -93,6 +93,48 @@ test('un petit score au tableau 1 quand on est deja debloque ne remontre pas le 
   expect(erreurs).toEqual([]);
 });
 
+test('niveaux verrouilles pour un profil neuf : seul Facile est ouvert', async ({ page }) => {
+  const erreurs = await ouvrirAvecRecords(page, {});
+  const niveaux = page.locator('#niveaux .niveau');
+  await expect(niveaux.nth(0)).not.toHaveClass(/verrouille/);   // Facile ouvert
+  await expect(niveaux.nth(1)).toHaveClass(/verrouille/);       // Moyen ferme (< 460)
+  await expect(niveaux.nth(2)).toHaveClass(/verrouille/);       // Difficile ferme (< 510)
+  // Cliquer sur Moyen verrouille montre l'indice et ne le selectionne pas.
+  await niveaux.nth(1).click();
+  await expect(page.locator('#niveau-indice')).toContainText('460');
+  await expect(niveaux.nth(1)).not.toHaveClass(/actif/);
+  expect(erreurs).toEqual([]);
+});
+
+test('record 460 au tableau 1 ouvre Moyen, pas encore Difficile', async ({ page }) => {
+  const erreurs = await ouvrirAvecRecords(page, { 'Raphaël': { t1: 460 } });
+  const niveaux = page.locator('#niveaux .niveau');
+  await expect(niveaux.nth(1)).not.toHaveClass(/verrouille/);   // Moyen ouvert (>= 460)
+  await expect(niveaux.nth(2)).toHaveClass(/verrouille/);       // Difficile ferme (< 510)
+  expect(erreurs).toEqual([]);
+});
+
+test('record 510 au tableau 1 ouvre Moyen ET Difficile', async ({ page }) => {
+  const erreurs = await ouvrirAvecRecords(page, { 'Raphaël': { t1: 510 } });
+  const niveaux = page.locator('#niveaux .niveau');
+  await expect(niveaux.nth(1)).not.toHaveClass(/verrouille/);
+  await expect(niveaux.nth(2)).not.toHaveClass(/verrouille/);
+  expect(erreurs).toEqual([]);
+});
+
+test('les niveaux debloques dependent du tableau : Difficile au T1 mais pas au T2 neuf', async ({ page }) => {
+  // Record eleve au tableau 1 (ouvre le T2 et tous ses niveaux au T1), mais rien au T2.
+  const erreurs = await ouvrirAvecRecords(page, { 'Raphaël': { t1: 600, t2: 0 } });
+  const niveaux = page.locator('#niveaux .niveau');
+  // Au tableau 1 : Difficile ouvert.
+  await expect(niveaux.nth(2)).not.toHaveClass(/verrouille/);
+  // On passe au tableau 2 (debloque) : ses niveaux repartent de zero.
+  await page.locator('#tableaux .tableau').nth(1).click();
+  await expect(niveaux.nth(1)).toHaveClass(/verrouille/);       // Moyen ferme au T2
+  await expect(niveaux.nth(2)).toHaveClass(/verrouille/);       // Difficile ferme au T2
+  expect(erreurs).toEqual([]);
+});
+
 test('tableau 2 verrouille pour un profil neuf : cliquer montre l indice, sans le selectionner', async ({ page }) => {
   const erreurs = await ouvrirAvecRecords(page, {});
   const boutonT2 = page.locator('#tableaux .tableau').nth(1);
