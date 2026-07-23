@@ -46,6 +46,12 @@ export const NIVEAUX_APPARITION = [
 ];
 export const NIVEAU_DEFAUT = 1;
 
+// Deverrouillage des niveaux, PAR TABLEAU : score a atteindre sur le tableau
+// courant pour ouvrir le niveau. Facile (indice 0) est toujours ouvert. Avec le
+// seuil des tableaux (560), on obtient l'echelle : 460 -> Moyen, 510 -> Difficile,
+// 560 -> tableau suivant.
+export const SEUIL_NIVEAU = [0, 460, 510];   // Facile / Moyen / Difficile
+
 // --- Camera ---------------------------------------------------------------
 // La camera suit le joueur mais ne tourne JAMAIS : c'est ce qui rend les
 // commandes "absolues" (haut = vers le fond de l'ecran, toujours).
