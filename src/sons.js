@@ -51,10 +51,33 @@ export function creerSons() {
     source.start();
   }
 
+  // Sons SYNTHETISES a la volee (aucun fichier WAV) : le champignon bonus a
+  // ainsi sa propre identite sonore sans qu'on ait a fabriquer un WAV.
+  function ton(freq, debut, duree, volume, type) {
+    const t0 = contexte.currentTime + debut;
+    const osc = contexte.createOscillator();
+    const gain = contexte.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(volume, t0 + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duree);
+    osc.connect(gain).connect(contexte.destination);
+    osc.start(t0);
+    osc.stop(t0 + duree + 0.03);
+  }
+  function sequence(notes, volume = 0.28, type = 'triangle') {
+    if (muet || !contexte || contexte.state !== 'running') return;
+    for (const [freq, debut, duree] of notes) ton(freq, debut, duree, volume, type);
+  }
+
   return {
     deverrouiller,
     jouer,
     recolte: (points) => jouer(`recolte_${points}`),
+    // Un blip a l'apparition du champignon, un petit arpege joyeux a la capture.
+    champignonApparait: () => sequence([[700, 0, 0.1], [1050, 0.09, 0.14]], 0.22, 'sine'),
+    bonus: () => sequence([[523, 0, 0.12], [659, 0.1, 0.12], [784, 0.2, 0.12], [1047, 0.3, 0.24]]),
     set muet(valeur) { muet = valeur; },
     get muet() { return muet; },
     get pret() { return pret; },

@@ -86,6 +86,7 @@ export function brancherPiloteAuto({ jeu, commandes, ui, sons, camera }) {
       rochers: jeu.rochers.length,
       tableau: jeu.tableauCourant,
       cristal: jeu.cristal !== null,
+      champignon: jeu.champignon !== null,
       joueur: { x: +jeu.joueur.position.x.toFixed(2), z: +jeu.joueur.position.z.toFixed(2) },
       mode: commandes.mode,
       compteurs: { ...jeu.compteurs },
@@ -105,6 +106,10 @@ export function brancherPiloteAuto({ jeu, commandes, ui, sons, camera }) {
     })),
     // Fait apparaitre le cristal tot, et demande a figer le jeu des qu'il sort.
     cristalTot: () => { figerAuCristal = true; jeu._reglerCristalPourTest(2.0, 7.0); },
+    // Champignon bonus : le forcer tot, le desactiver, ou le capturer (tests).
+    champignonTot: () => jeu._reglerChampignonPourTest(0.2),
+    desactiverChampignon: () => jeu._reglerChampignonPourTest(999),
+    capturerChampignon: () => jeu._capturerChampignon(),
     forcerFleches: (l) => commandes._test.forcerFleches(l),
     etatSouris: () => commandes._test.etatSouris(),
     reprendre: () => { enPause = false; },

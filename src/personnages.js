@@ -1,4 +1,4 @@
-/** Le petit fermier et les Rodeurs. */
+/** Le petit fermier, les Rodeurs, et le champignon bonus. */
 
 import * as THREE from 'three';
 import { COULEURS } from './reglages.js';
@@ -12,6 +12,9 @@ const MAT_ENNEMI = mat(COULEURS.ennemi);
 const MAT_PIQUE = mat(COULEURS.pique);
 const MAT_OEIL = mat(0xffffff);
 const MAT_PUPILLE = mat(0x111111);
+const MAT_CHAMP_CHAPEAU = mat(COULEURS.champignonChapeau);
+const MAT_CHAMP_PIED = mat(COULEURS.champignonPied);
+const MAT_CHAMP_POIS = mat(COULEURS.champignonPois);
 
 function maille(geometrie, materiau, x = 0, y = 0, z = 0) {
   const m = new THREE.Mesh(geometrie, materiau);
@@ -83,6 +86,36 @@ export function batiEnnemi() {
     const oeil = maille(new THREE.SphereGeometry(0.08, 8, 6), MAT_OEIL, 0.16 * cote, 1.0, 0.28);
     corps.add(oeil);
     oeil.add(maille(new THREE.SphereGeometry(0.04, 6, 6), MAT_PUPILLE, 0, 0, 0.06));
+  }
+
+  racine.userData = { corps };
+  return racine;
+}
+
+export function batiChampignon() {
+  const racine = new THREE.Group();
+  const corps = new THREE.Group();   // ce qui sautille en se deplacant
+  racine.add(corps);
+
+  corps.add(maille(new THREE.CylinderGeometry(0.18, 0.24, 0.55, 10), MAT_CHAMP_PIED, 0, 0.28, 0));
+
+  // Chapeau : une demi-sphere posee sur le pied.
+  corps.add(maille(new THREE.SphereGeometry(0.5, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2),
+                   MAT_CHAMP_CHAPEAU, 0, 0.55, 0));
+
+  // Pois blancs sur le chapeau : la marque du champignon.
+  const geoPois = new THREE.SphereGeometry(0.07, 8, 6);
+  for (let angle = 0; angle < 360; angle += 72) {
+    const rad = THREE.MathUtils.degToRad(angle);
+    corps.add(maille(geoPois, MAT_CHAMP_POIS, Math.sin(rad) * 0.33, 0.66, Math.cos(rad) * 0.33));
+  }
+  corps.add(maille(geoPois, MAT_CHAMP_POIS, 0, 0.74, 0));
+
+  // Deux petits yeux sur le pied, cote face : ca lui donne vie.
+  for (const cote of [-1, 1]) {
+    const oeil = maille(new THREE.SphereGeometry(0.06, 8, 6), MAT_OEIL, 0.1 * cote, 0.34, 0.19);
+    corps.add(oeil);
+    oeil.add(maille(new THREE.SphereGeometry(0.03, 6, 6), MAT_PUPILLE, 0, 0, 0.045));
   }
 
   racine.userData = { corps };

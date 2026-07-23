@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import * as R from './reglages.js';
 import { TYPES_PLANTES, TYPE_CRISTAL, typeAuHasard } from './plantes.js';
-import { batiJoueur, batiEnnemi } from './personnages.js';
+import { batiJoueur, batiEnnemi, batiChampignon } from './personnages.js';
 import { batiObstacle } from './rochers.js';
 
 const auHasard = (min, max) => min + Math.random() * (max - min);
@@ -36,6 +36,10 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
   let niveauCourant = 1;   // pour la vitesse des Rodeurs, croissante avec le niveau
   let cristal = null;
   let cristalTempsRestant = 0;
+  let champignon = null;
+  let champignonRestant = 0;
+  let champignonHeure = 0;      // instant d'apparition (ecoule), tire au demarrage
+  let champignonApparu = false;
   let delaiCristal = R.CRISTAL_PREMIER_DELAI;
   let invincibleRestant = 0;
   let prochainTic = 10;
@@ -207,6 +211,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
     ennemis = [];
     rochers = [];
     retirerCristal();
+    retirerChampignon();
 
     // Re-skin selon le tableau : meme decor, quelques couleurs changees pour que
     // le tableau 2 se sente comme un autre lieu (une recompense).
@@ -215,10 +220,10 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
     const palette = R.PALETTE_TABLEAU[tableau - 1] || R.PALETTE_TABLEAU[0];
     if (sol) {
       sol.material.color.setHex(palette.sol);
-      // Texture et relief pour tous les tableaux >= 2 ; le tableau 1 reste lisse.
-      const releve = tableau >= 2;
-      sol.material.map = releve ? reliefSol.couleur : null;
-      sol.material.bumpMap = releve ? reliefSol.bump : null;
+      // Texture et relief sur TOUS les tableaux : la texture est en niveaux de
+      // gris, elle prend la teinte du sol courant (herbe, roche, neige, lave...).
+      sol.material.map = reliefSol.couleur;
+      sol.material.bumpMap = reliefSol.bump;
       sol.material.bumpScale = R.SOL_RELIEF_BUMP;
       sol.material.needsUpdate = true;   // changer une carte recompile le shader
     }
@@ -231,6 +236,8 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
     delaiCristal = R.CRISTAL_PREMIER_DELAI;
     prochainTic = 10;
     cycleMarche = 0;
+    champignonApparu = false;
+    champignonHeure = auHasard(...R.CHAMPIGNON_FENETRE);   // apparition a un instant aleatoire
     compteurs = { recoltes: 0, degats: 0, pointsPerdus: 0, cristaux: 0, pas: 0 };
 
     joueur.position.set(0, 0, 0);
@@ -346,6 +353,60 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
     }
   }
 
+  function faireApparaitreChampignon() {
+    champignonApparu = true;
+    champignon = batiChampignon();
+    champignon.position.copy(positionAleatoire(10, joueur.position));
+    champignon.userData.cible = positionAleatoire();
+    champignonRestant = R.CHAMPIGNON_DUREE_VIE;
+    scene.add(champignon);
+    sons.champignonApparait();
+  }
+
+  function retirerChampignon() {
+    if (champignon) { scene.remove(champignon); champignon = null; }
+  }
+
+  function capturerChampignon() {
+    tempsRestant += R.CHAMPIGNON_BONUS;
+    sons.bonus();
+    const p = versEcran(champignon.position);
+    ui.volant(p.x, p.y, `+${R.CHAMPIGNON_BONUS} s`, '#ffd21f');
+    ui.majChrono(tempsRestant);
+    retirerChampignon();
+  }
+
+  /** Le champignon bonus : apparait une fois, flane comme un Rodeur, +5 s si attrape. */
+  function majChampignon(dt) {
+    if (!champignon) {
+      const ecoule = R.DUREE_PARTIE - tempsRestant;
+      if (!champignonApparu && ecoule >= champignonHeure) faireApparaitreChampignon();
+      return;
+    }
+    const d = champignon.userData;
+    if (distanceSol(champignon.position, d.cible) < 1.5) d.cible = positionAleatoire();
+    const dx = d.cible.x - champignon.position.x;
+    const dz = d.cible.z - champignon.position.z;
+    const norme = Math.hypot(dx, dz);
+    if (norme > 0.05) {
+      champignon.position.x += (dx / norme) * R.CHAMPIGNON_VITESSE * dt;
+      champignon.position.z += (dz / norme) * R.CHAMPIGNON_VITESSE * dt;
+      champignon.rotation.y = versAngle(champignon.rotation.y, Math.atan2(dx, dz),
+                                        THREE.MathUtils.degToRad(300) * dt);
+    }
+    ecarterDesRochers(champignon.position);
+    const limite = R.DEMI_CHAMP - R.MARGE_JOUEUR;
+    champignon.position.x = borner(champignon.position.x, -limite, limite);
+    champignon.position.z = borner(champignon.position.z, -limite, limite);
+    champignon.userData.corps.position.y = Math.abs(Math.sin(horloge * 8)) * 0.12;   // sautille
+
+    champignonRestant -= dt;
+    if (champignonRestant < 2) champignon.visible = Math.sin(horloge * 18) > -0.3;    // clignote avant de partir
+
+    if (distanceSol(champignon.position, joueur.position) < R.RAYON_RECOLTE + 0.4) capturerChampignon();
+    else if (champignonRestant <= 0) retirerChampignon();
+  }
+
   function majEnnemis(dt) {
     // La vitesse de base des Rodeurs augmente avec le niveau de difficulte.
     const vitesseBase = R.VITESSE_ENNEMI * (R.VITESSE_ENNEMI_NIVEAU[niveauCourant - 1] || 1);
@@ -437,6 +498,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
     majJoueur(dt);
     majPlantes(dt);
     majCristal(dt);
+    majChampignon(dt);
     majEnnemis(dt);
     majInvincibilite(dt);
     majChrono(dt);
@@ -464,6 +526,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
     get rochers() { return rochers; },
     get tableauCourant() { return tableauCourant; },
     get cristal() { return cristal; },
+    get champignon() { return champignon; },
     get compteurs() { return compteurs; },
     set crochetCristal(f) { crochetCristal = f; },
     // Reserve au pilote automatique : fait apparaitre le Cristal-lune tot et
@@ -472,5 +535,13 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
       delaiCristal = delai;
       distanceCristal = distanceMini;
     },
+    // Reserve aux tests : regle l'instant d'apparition du champignon (0.2 pour le
+    // forcer tot, 999 pour le desactiver dans le test deterministe des 3600 pas).
+    _reglerChampignonPourTest(heure) {
+      champignonHeure = heure;
+      champignonApparu = false;
+      retirerChampignon();
+    },
+    _capturerChampignon() { if (champignon) capturerChampignon(); },
   };
 }
