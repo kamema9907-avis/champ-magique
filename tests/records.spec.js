@@ -135,6 +135,26 @@ test('les niveaux debloques dependent du tableau : Difficile au T1 mais pas au T
   expect(erreurs).toEqual([]);
 });
 
+test('la chaine de deverrouillage va jusqu au tableau 8', async ({ page }) => {
+  const plein = {};
+  for (let t = 1; t <= 7; t++) plein['t' + t] = 560;   // ouvre jusqu'a T8
+  const erreurs = await ouvrirAvecRecords(page, { 'Raphaël': plein });
+  await expect(page.locator('#tableaux .tableau')).toHaveCount(8);
+  await expect(page.locator('#tableaux .tableau').nth(7)).not.toHaveClass(/verrouille/);   // T8 ouvert
+  expect(erreurs).toEqual([]);
+});
+
+test('legende du menu : fleurs sur le tableau 1, legumes sur un tableau 5-8', async ({ page }) => {
+  const plein = {};
+  for (let t = 1; t <= 8; t++) plein['t' + t] = 600;
+  const erreurs = await ouvrirAvecRecords(page, { 'Raphaël': plein });
+  await expect(page.locator('#legende')).toContainText('Mousse-bleue');   // T1 : fleurs
+  await page.locator('#tableaux .tableau').nth(4).click();                // Tableau 5
+  await expect(page.locator('#legende')).toContainText('Carotte');        // legumes
+  await expect(page.locator('#legende')).not.toContainText('Mousse-bleue');
+  expect(erreurs).toEqual([]);
+});
+
 test('tableau 2 verrouille pour un profil neuf : cliquer montre l indice, sans le selectionner', async ({ page }) => {
   const erreurs = await ouvrirAvecRecords(page, {});
   const boutonT2 = page.locator('#tableaux .tableau').nth(1);

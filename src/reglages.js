@@ -55,6 +55,11 @@ export const NIVEAUX_APPARITION = [
 ];
 export const NIVEAU_DEFAUT = 1;
 
+// Nombre de Rodeurs presents AU DEPART (temps 0), par tableau : plus le tableau
+// est avance, plus il y en a des le debut. Les vagues suivantes suivent ensuite
+// l'horaire du niveau (NIVEAUX_APPARITION). Cumule avec la vitesse par niveau.
+export const RODEURS_DEPART_TABLEAU = [1, 1, 1, 1, 2, 3, 4, 5];
+
 // Deverrouillage des niveaux, PAR TABLEAU : score a atteindre sur le tableau
 // courant pour ouvrir le niveau. Facile (indice 0) est toujours ouvert. Avec le
 // seuil des tableaux (560), on obtient l'echelle : 460 -> Moyen, 510 -> Difficile,
@@ -119,6 +124,20 @@ export const COULEURS = {
   champignonChapeau: 0xff5fa8,
   champignonPied: 0xf3e9d2,
   champignonPois: 0xffffff,
+  // Legumes (tableaux 5-8).
+  carotte: 0xe8781f,
+  aubergine: 0x6a2fa0,
+  mais: 0xf2c94c,
+  poivron: 0x3faf4a,
+  citrouille: 0xe07a1f,
+  legumeFeuille: 0x4a9e3f,
+  // Obstacles thematiques des tableaux 5-8.
+  caisse: 0x8a5a2f,
+  ruche: 0xd9a534,
+  rucheLueur: 0x4a3000,
+  menhir: 0x565a78,
+  gemme: 0xc24dff,
+  gemmeLueur: 0x4a1060,
 };
 
 // --- Tableau 2 : Les Rochers ----------------------------------------------
@@ -126,7 +145,7 @@ export const COULEURS = {
 // d'obstacles a contourner. Ces valeurs sont a ajuster en jouant.
 // Deverrouillage EN CHAINE : le seuil d'indice i est le record a atteindre sur
 // le tableau (i+1) pour debloquer le tableau (i+2). Longueur = nb de tableaux - 1.
-export const SEUIL_DEBLOCAGE = [560, 560, 560];  // T1->T2, T2->T3, T3->T4
+export const SEUIL_DEBLOCAGE = [560, 560, 560, 560, 560, 560, 560];  // T1->T2, ..., T7->T8
 export const NB_ROCHERS = [4, 8, 12];            // par niveau (Facile / Moyen / Difficile)
 export const ROCHER_RAYON_VISUEL = [0.8, 1.2];   // tirage aleatoire, pour varier les rochers
 export const ROCHER_RAYON_COLLISION = 1.3;       // joueur et Rodeurs sont bloques a ce rayon
@@ -142,6 +161,10 @@ export const PALETTE_TABLEAU = [
   { sol: 0x9c7a4d, ciel: 0xcbb28f, feuille: 0xcf7a33 },   // 2 Les Rochers : aride, chaud, orangé
   { sol: 0xcdddea, ciel: 0xb9cdd8, feuille: 0xa9d2ea },   // 3 Forêt Gelée : neige, ciel froid, givre
   { sol: 0x4a3a36, ciel: 0x7a3028, feuille: 0x3a2420 },   // 4 Terres de Feu : sol sombre, ciel rouge
+  { sol: 0x5a3d28, ciel: 0x9fc4e8, feuille: 0x3d8b37 },   // 5 Potager Enchanté : terre labourée
+  { sol: 0xc9a23a, ciel: 0xf0d488, feuille: 0xb8912e },   // 6 Champs de Miel : ambre doré
+  { sol: 0x2a2b52, ciel: 0x1a1b3a, feuille: 0x8a9ac0 },   // 7 Jardin Nocturne : indigo, nuit
+  { sol: 0x8f4d82, ciel: 0x4fd6c8, feuille: 0xe86ab0 },   // 8 Vallée Arc-en-ciel : magenta, turquoise
 ];
 
 // --- Profils --------------------------------------------------------------

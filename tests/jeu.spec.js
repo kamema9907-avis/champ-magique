@@ -147,7 +147,11 @@ test('tableau 2 : les rochers apparaissent, les plantes les evitent, et rien ne 
 // Tableaux 3 et 4 : meme mecanique d'obstacles que le tableau 2 (deja testee en
 // duree ci-dessus), on verifie ici le nombre d'obstacles, l'evitement des
 // plantes, et on prend une capture pour juger le rendu.
-for (const { tableau, nom } of [{ tableau: 3, nom: 'foret_gelee' }, { tableau: 4, nom: 'terres_de_feu' }]) {
+for (const { tableau, nom } of [
+  { tableau: 3, nom: 'foret_gelee' }, { tableau: 4, nom: 'terres_de_feu' },
+  { tableau: 5, nom: 'potager_enchante' }, { tableau: 6, nom: 'champs_de_miel' },
+  { tableau: 7, nom: 'jardin_nocturne' }, { tableau: 8, nom: 'vallee_arc_en_ciel' },
+]) {
   test(`tableau ${tableau} : obstacles en place et plantes a l'ecart`, async ({ page }) => {
     const erreurs = await ouvrir(page);
     await page.evaluate((t) => window.__test.demarrer(t, 3), tableau);
@@ -167,6 +171,36 @@ for (const { tableau, nom } of [{ tableau: 3, nom: 'foret_gelee' }, { tableau: 4
     expect(erreurs).toEqual([]);
   });
 }
+
+test('tableaux 5-8 : on recolte des legumes, pas des fleurs', async ({ page }) => {
+  const erreurs = await ouvrir(page);
+  const LEGUMES = ['Carotte', 'Aubergine', 'Maïs', 'Poivron', 'Citrouille'];
+
+  // Tableau 1 : des fleurs.
+  await page.evaluate(() => window.__test.demarrer(1, 1));
+  const fleurs = await page.evaluate(() => window.__test.typesPlantes());
+  expect(fleurs.some((n) => LEGUMES.includes(n))).toBe(false);
+
+  // Tableau 5 : uniquement des legumes.
+  await page.evaluate(() => window.__test.demarrer(5, 1));
+  const recoltes = await page.evaluate(() => window.__test.typesPlantes());
+  expect(recoltes.length).toBeGreaterThan(0);
+  for (const nom of recoltes) expect(LEGUMES).toContain(nom);
+
+  expect(erreurs).toEqual([]);
+});
+
+test('Rodeurs de depart : 1 aux tableaux 1-4, 2 au tableau 5, 5 au tableau 8', async ({ page }) => {
+  const erreurs = await ouvrir(page);
+  const ennemisDepart = async (tableau, niveau) => {
+    await page.evaluate((a) => window.__test.demarrer(a.t, a.n), { t: tableau, n: niveau });
+    return (await page.evaluate(() => window.__test.etat())).ennemis;
+  };
+  expect(await ennemisDepart(1, 1)).toBe(1);
+  expect(await ennemisDepart(5, 1)).toBe(2);
+  expect(await ennemisDepart(8, 1)).toBe(5);
+  expect(erreurs).toEqual([]);
+});
 
 test('champignon bonus : apparait et donne +5 s a la capture', async ({ page }) => {
   test.setTimeout(30_000);
