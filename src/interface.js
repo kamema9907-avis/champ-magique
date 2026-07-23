@@ -8,6 +8,7 @@
  */
 
 import * as R from './reglages.js';
+import { typesDuTableau, TYPE_CRISTAL } from './plantes.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -139,7 +140,9 @@ export function creerInterface({ surDemarrage }) {
     for (const [autre, bouton] of boutonsNiveau) bouton.classList.toggle('actif', autre === n);
   }
 
-  const NOMS_TABLEAUX = ['Le Champ', 'Les Rochers', 'Forêt Gelée', 'Terres de Feu'];
+  const NOMS_TABLEAUX = ['Le Champ', 'Les Rochers', 'Forêt Gelée', 'Terres de Feu',
+                         'Le Potager Enchanté', 'Les Champs de Miel',
+                         'Le Jardin Nocturne', 'La Vallée Arc-en-ciel'];
 
   function dessinerTableaux() {
     const conteneur = $('tableaux');
@@ -175,6 +178,7 @@ export function creerInterface({ surDemarrage }) {
     // Les profils affichent le record du tableau SELECTIONNE : on les redessine.
     dessinerJoueurs();
     dessinerNiveaux();
+    majLegende();   // fleurs ou legumes selon le tableau
     majRecordHud();
   }
 
@@ -216,15 +220,20 @@ export function creerInterface({ surDemarrage }) {
       <span class="pc-seul">Flèches, ou clique pour marcher vers le curseur (reclique pour t'arrêter).</span>
       La récolte est automatique au contact.
     </p>
-    <div class="plantes">
-      <span><i class="pastille" style="background:#3d7bff"></i>Mousse-bleue 1</span>
-      <span><i class="pastille" style="background:#ffd21f"></i>Épi doré 3</span>
-      <span><i class="pastille" style="background:#a339d6"></i>Trompette pourpre 5</span>
-      <span><i class="pastille" style="background:#ff6a00"></i>Étoile-de-feu 10</span>
-      <span><i class="pastille" style="background:#3df2ff"></i>Cristal-lune 25</span>
-    </div>
+    <div class="plantes" id="legende"></div>
     <p class="avert">Le Cristal-lune ne reste que 8 secondes. Attention aux Rôdeurs rouges :
     un contact coûte 10% de ton score.</p>`;
+
+  // La legende des recoltes depend du tableau : fleurs (1-4) ou legumes (5-8),
+  // plus le Cristal-lune, toujours present. Rien sur l'ecran de fin (pas de #legende).
+  function majLegende() {
+    const el = $('legende');
+    if (!el) return;
+    const hex = (c) => '#' + c.toString(16).padStart(6, '0');
+    el.innerHTML = [...typesDuTableau(tableau), TYPE_CRISTAL].map((t) =>
+      `<span><i class="pastille" style="background:${hex(t.couleur)}"></i>${t.nom} ${t.points}</span>`
+    ).join('');
+  }
 
   $('action').addEventListener('click', () => surDemarrage());
 
@@ -246,6 +255,7 @@ export function creerInterface({ surDemarrage }) {
       dessinerJoueurs();
       dessinerTableaux();
       dessinerNiveaux();
+      majLegende();
       majRecordHud();
     },
 

@@ -131,7 +131,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
   }
 
   function creerPlante(distanceMini = 0) {
-    const type = typeAuHasard();
+    const type = typeAuHasard(tableauCourant);   // fleurs (1-4) ou legumes (5-8)
     const plante = type.bati();
     plante.position.copy(positionAleatoire(distanceMini, joueur.position));
     // Rotation au hasard pour varier les touffes, sauf pour les plantes animees.
@@ -250,14 +250,12 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
 
     for (let i = 0; i < R.NB_PLANTES; i++) creerPlante();
 
-    // Le calendrier des Rodeurs depend du niveau choisi. Les vagues a 0 s
-    // apparaissent tout de suite; les autres seront declenchees par le chrono.
+    // Les Rodeurs de DEPART depend du tableau (plus il est avance, plus il y en
+    // a). Les vagues suivantes (horaire > 0 s) suivent le niveau de difficulte.
     const calendrier = R.NIVEAUX_APPARITION[niveau - 1] || R.NIVEAUX_APPARITION[0];
-    apparitions = [...calendrier];
-    while (apparitions.length && apparitions[0] <= 0) {
-      apparitions.shift();
-      creerEnnemi();
-    }
+    apparitions = calendrier.filter((t) => t > 0);
+    const depart = R.RODEURS_DEPART_TABLEAU[tableau - 1] || 1;
+    for (let i = 0; i < depart; i++) creerEnnemi();
 
     commandes.reinitialiser();
     ui.cacherPanneau();

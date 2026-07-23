@@ -104,6 +104,8 @@ export function brancherPiloteAuto({ jeu, commandes, ui, sons, camera }) {
     plantesPos: () => jeu.plantes.map((p) => ({
       x: +p.position.x.toFixed(2), z: +p.position.z.toFixed(2),
     })),
+    // Les noms distincts des recoltes en jeu (pour verifier fleurs vs legumes).
+    typesPlantes: () => [...new Set(jeu.plantes.map((p) => p.userData.type.nom))],
     // Fait apparaitre le cristal tot, et demande a figer le jeu des qu'il sort.
     cristalTot: () => { figerAuCristal = true; jeu._reglerCristalPourTest(2.0, 7.0); },
     // Champignon bonus : le forcer tot, le desactiver, ou le capturer (tests).

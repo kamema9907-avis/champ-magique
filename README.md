@@ -118,27 +118,36 @@ suivant. Un cadenas marque les niveaux encore verrouillés.
 
 ### Les tableaux à débloquer
 
-Au-delà du **Champ** (tableau 1), trois tableaux se débloquent en récompense,
-chacun avec son décor (sol texturé re-teinté, ciel et arbres de couleurs
-différentes) et ses obstacles à contourner. Joueur **et** Rôdeurs sont bloqués
-par les obstacles et glissent le long.
+Au-delà du **Champ** (tableau 1), **sept tableaux** se débloquent en récompense,
+chacun avec son décor (sol texturé, ciel et arbres de couleurs différentes) et
+ses obstacles à contourner. Joueur **et** Rôdeurs sont bloqués par les obstacles
+et glissent le long. À partir du **tableau 5**, on récolte des **légumes** au
+lieu des fleurs.
 
-| Tableau | Décor | Obstacles |
-|---|---|---|
-| 1 · Le Champ | prairie verte (sol lisse) | aucun |
-| 2 · Les Rochers | aride, ciel chaud, arbres orangés | rochers |
-| 3 · Forêt Gelée | neige, ciel froid, arbres givrés | blocs de glace |
-| 4 · Terres de Feu | sol volcanique, ciel rouge, arbres carbonisés | rochers de lave |
+| Tableau | Décor | Obstacles | Récolte |
+|---|---|---|---|
+| 1 · Le Champ | prairie verte | aucun | fleurs |
+| 2 · Les Rochers | aride, arbres orangés | rochers | fleurs |
+| 3 · Forêt Gelée | neige, arbres givrés | blocs de glace | fleurs |
+| 4 · Terres de Feu | volcanique, ciel rouge | rochers de lave | fleurs |
+| 5 · Le Potager Enchanté | terre labourée | caisses en bois | légumes |
+| 6 · Les Champs de Miel | ambre doré | ruches | légumes |
+| 7 · Le Jardin Nocturne | indigo (nuit) | menhirs | légumes |
+| 8 · La Vallée Arc-en-ciel | magenta, turquoise | gemmes | légumes |
 
-- **Déverrouillage en chaîne, par profil** : le tableau 2 s'ouvre quand le record
-  du **tableau 1** atteint le seuil ; le 3 via le **tableau 2** ; le 4 via le
-  **tableau 3** (`SEUIL_DEBLOCAGE`, 560 partout au départ). Ce n'est pas un drapeau
-  stocké mais une **déduction du record** : remettre les records à zéro (appui
-  long) re-verrouille toute la chaîne.
-- **Trois niveaux** partout, avec le même rythme de Rôdeurs et un nombre
-  d'obstacles croissant : Facile **4**, Moyen **8**, Difficile **12**
-  (`NB_ROCHERS`). Placés au hasard à chaque partie, loin du départ et espacés ;
-  plantes et cristaux les évitent.
+- **Déverrouillage en chaîne, par profil** : chaque tableau s'ouvre quand le
+  record du **tableau précédent** atteint le seuil (`SEUIL_DEBLOCAGE`, 560 partout
+  au départ). Ce n'est pas un drapeau stocké mais une **déduction du record** :
+  remettre les records à zéro (appui long) re-verrouille toute la chaîne.
+- **Trois niveaux** partout, avec un nombre d'obstacles croissant : Facile **4**,
+  Moyen **8**, Difficile **12** (`NB_ROCHERS`). Placés au hasard à chaque partie,
+  loin du départ et espacés ; récoltes et cristaux les évitent.
+- **Rôdeurs de départ croissants** : 1 pour les tableaux 1-4, puis **2, 3, 4, 5**
+  pour les tableaux 5, 6, 7, 8 (`RODEURS_DEPART_TABLEAU`). Les vagues suivantes
+  arrivent ensuite selon l'horaire du niveau.
+- **Récoltes** : fleurs (tableaux 1-4) ou légumes (5-8 : Carotte 1, Aubergine 2,
+  Maïs 3, Poivron 5, Citrouille 10). Le Cristal-lune (25) et le champignon bonus
+  sont présents partout. La légende du menu s'adapte au tableau sélectionné.
 - **Un record par tableau et par profil** (`t1`..`t4`). L'écran de départ montre
   le record du tableau **sélectionné**, et un cadenas sur chaque tableau encore
   verrouillé. Franchir un seuil affiche « 🎉 *nom du tableau* débloqué ! ».

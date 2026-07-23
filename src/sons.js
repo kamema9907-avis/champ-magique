@@ -74,7 +74,15 @@ export function creerSons() {
   return {
     deverrouiller,
     jouer,
-    recolte: (points) => jouer(`recolte_${points}`),
+    // Les sons de recolte existent par paliers (1/3/5/10/25). Un legume a 2 pts
+    // (Aubergine) n'a pas de son propre : on prend le palier existant le plus
+    // proche en dessous, pour rester coherent sans fabriquer de nouveaux WAV.
+    recolte: (points) => {
+      const paliers = [1, 3, 5, 10, 25];
+      let choix = paliers[0];
+      for (const p of paliers) if (points >= p) choix = p;
+      jouer(`recolte_${choix}`);
+    },
     // Un blip a l'apparition du champignon, un petit arpege joyeux a la capture.
     champignonApparait: () => sequence([[700, 0, 0.1], [1050, 0.09, 0.14]], 0.22, 'sine'),
     bonus: () => sequence([[523, 0, 0.12], [659, 0.1, 0.12], [784, 0.2, 0.12], [1047, 0.3, 0.24]]),
