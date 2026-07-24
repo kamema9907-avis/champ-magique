@@ -20,11 +20,11 @@ rendu.setPixelRatio(Math.min(window.devicePixelRatio, 2));  // au-dela, on paie 
 rendu.shadowMap.enabled = true;
 rendu.shadowMap.type = THREE.PCFShadowMap;   // PCFSoft est deprecie depuis three 0.185
 
-const { scene, camera, sol, feuillage, reliefSol } = creerMonde();
+const { scene, camera, sol, feuillage, reliefSol, majCiel } = creerMonde();
 const commandes = creerCommandes({ canvas, camera, scene });
 const sons = creerSons();
 const ui = creerInterface({ surDemarrage: () => demarrer() });
-const jeu = creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, reliefSol });
+const jeu = creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, reliefSol, majCiel });
 
 function demarrer() {
   // Le son doit etre debloque DANS le geste de l'utilisateur : c'est la seule

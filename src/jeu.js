@@ -22,7 +22,7 @@ function versAngle(actuel, cible, pasMax) {
   return actuel + borner(ecart, -pasMax, pasMax);
 }
 
-export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, reliefSol }) {
+export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, reliefSol, majCiel }) {
   const joueur = batiJoueur();
   scene.add(joueur);
 
@@ -228,7 +228,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
       sol.material.needsUpdate = true;   // changer une carte recompile le shader
     }
     if (feuillage) feuillage.color.setHex(palette.feuille);
-    scene.background.setHex(palette.ciel);
+    if (majCiel) majCiel(palette.ciel);   // ciel degrade + brouillard teintes
 
     score = 0;
     tempsRestant = R.DUREE_PARTIE;

@@ -73,6 +73,12 @@ export const SEUIL_NIVEAU = [0, 460, 510];   // Facile / Moyen / Difficile
 export const DECALAGE_CAMERA = { x: 0, y: 20, z: -16.78 };
 export const SUIVI_CAMERA = 7.0;    // vitesse de rattrapage de la camera
 
+// --- Atmosphere -----------------------------------------------------------
+// Brouillard lointain : laisse l'aire de jeu nette (le joueur est a ~26 m de la
+// camera) et fond le bord du sol et les arbres lointains dans le ciel.
+export const FOG_NEAR = 45;   // distance (m) ou le brouillard commence
+export const FOG_FAR = 100;   // distance ou il masque tout (fond, bord du sol)
+
 // Sur PC (16:9) la version Python utilisait 42 deg d'ouverture VERTICALE, ce qui
 // donne cette ouverture HORIZONTALE. On la garde constante quel que soit l'ecran :
 // un iPad (4:3) verra donc plus haut et plus bas, mais AUTANT sur les cotes.

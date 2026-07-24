@@ -127,9 +127,57 @@ function genererTexturesSol() {
   return { bump: finir(bump), couleur: finir(couleur) };
 }
 
+// Ciel en degrade : une grande sphere vue de l'interieur, avec un shader qui
+// interpole entre la couleur du zenith (haut) et de l'horizon (bas). Dessine en
+// premier, sans ecrire la profondeur : le reste du monde se pose par-dessus.
+function creerCielDome() {
+  const materiau = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    depthWrite: false,
+    depthTest: false,
+    uniforms: {
+      haut: { value: new THREE.Color(R.COULEURS.ciel) },
+      bas: { value: new THREE.Color(R.COULEURS.ciel) },
+    },
+    vertexShader: `
+      varying vec3 vDir;
+      void main() {
+        vDir = normalize(position);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }`,
+    fragmentShader: `
+      varying vec3 vDir;
+      uniform vec3 haut;
+      uniform vec3 bas;
+      void main() {
+        float t = pow(clamp(vDir.y * 0.5 + 0.5, 0.0, 1.0), 0.7);
+        gl_FragColor = vec4(mix(bas, haut, t), 1.0);
+      }`,
+  });
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(200, 24, 16), materiau);
+  dome.renderOrder = -1;   // avant tout le reste
+  return { dome, materiau };
+}
+
 export function creerMonde() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(R.COULEURS.ciel);
+
+  // Ciel en degrade + brouillard lointain, tous deux re-teintables par tableau.
+  const { dome, materiau: matCiel } = creerCielDome();
+  scene.add(dome);
+  scene.fog = new THREE.Fog(R.COULEURS.ciel, R.FOG_NEAR, R.FOG_FAR);
+
+  /** Re-teinte le ciel et le brouillard selon la couleur de ciel d'un tableau. */
+  function majCiel(hex) {
+    const zenith = new THREE.Color(hex);
+    const horizon = zenith.clone().lerp(new THREE.Color(0xffffff), 0.22);   // plus clair
+    matCiel.uniforms.haut.value.copy(zenith);
+    matCiel.uniforms.bas.value.copy(horizon);
+    scene.fog.color.copy(horizon);         // le sol au loin se fond dans l'horizon
+    scene.background.copy(horizon);         // filet de securite si le dome ne couvre pas
+  }
+  majCiel(R.COULEURS.ciel);
 
   // Le sol deborde tres largement l'aire de jeu : sinon, quand le joueur longe
   // le bord sud, la camera (placee derriere lui) filme au-dela du plan et on
@@ -174,7 +222,7 @@ export function creerMonde() {
   // Le feuillage (2e enfant du groupe : troncs d'abord, feuilles ensuite) est
   // renvoye pour pouvoir le re-teinter selon le tableau, comme le relief du sol.
   return {
-    scene, camera, soleil, sol,
+    scene, camera, soleil, sol, majCiel,
     feuillage: arbres.children[1].material,
     reliefSol: genererTexturesSol(),
   };
