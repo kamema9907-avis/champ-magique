@@ -18,6 +18,9 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { estToon } from './materiaux.js';
+import { ShaderContour } from './contour.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -37,9 +40,16 @@ const jeu = creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, relie
 // (halo couteux -> tests plus rapides et rendu deterministe), sauf si ?post force
 // l'activation (pour previsualiser/deboguer le post-traitement en mode test).
 let composer = null;
+let passeContour = null;
 if (!params.has('test') || params.has('post')) {
   composer = new EffectComposer(rendu);
   composer.addPass(new RenderPass(scene, camera));
+  // Contour BD (mode toon uniquement), avant le bloom : les bords assombris ne
+  // font pas halo, le bloom illumine ensuite les zones claires.
+  if (estToon()) {
+    passeContour = new ShaderPass(ShaderContour);
+    composer.addPass(passeContour);
+  }
   composer.addPass(new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
     R.BLOOM_INTENSITE, R.BLOOM_RAYON, R.BLOOM_SEUIL));
@@ -63,6 +73,7 @@ function redimensionner() {
   rendu.setPixelRatio(ratio);
   rendu.setSize(l, h);
   if (composer) { composer.setPixelRatio(ratio); composer.setSize(l, h); }
+  if (passeContour) passeContour.uniforms.resolution.value.set(l * ratio, h * ratio);
   camera.aspect = l / h;
   // L'ouverture s'adapte a la forme de l'ecran pour garder une largeur de champ
   // constante : c'est par les cotes qu'arrivent les Rodeurs.

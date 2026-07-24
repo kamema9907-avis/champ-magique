@@ -2,8 +2,7 @@
 
 import * as THREE from 'three';
 import { COULEURS } from './reglages.js';
-
-const mat = (couleur) => new THREE.MeshLambertMaterial({ color: couleur });
+import { mat } from './materiaux.js';
 
 const MAT_PEAU = mat(COULEURS.peau);
 const MAT_SALOPETTE = mat(COULEURS.salopette);

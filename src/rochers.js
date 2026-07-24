@@ -6,21 +6,18 @@
 
 import * as THREE from 'three';
 import { COULEURS } from './reglages.js';
+import { mat } from './materiaux.js';
 
 // Materiaux partages (un seul par type, c'est gratuit). flatShading donne des
 // facettes nettes, un rendu mineral plutot que lisse.
-const MAT_ROCHER = new THREE.MeshLambertMaterial({ color: COULEURS.rocher, flatShading: true });
-const MAT_GLACE = new THREE.MeshLambertMaterial({
-  color: COULEURS.glace, flatShading: true, transparent: true, opacity: 0.85 });
-const MAT_LAVE = new THREE.MeshLambertMaterial({
-  color: COULEURS.lave, emissive: COULEURS.laveLueur, flatShading: true });
+const MAT_ROCHER = mat(COULEURS.rocher, { flatShading: true });
+const MAT_GLACE = mat(COULEURS.glace, { flatShading: true, transparent: true, opacity: 0.85 });
+const MAT_LAVE = mat(COULEURS.lave, { emissive: COULEURS.laveLueur, flatShading: true });
 // Obstacles thematiques des tableaux 5-8.
-const MAT_CAISSE = new THREE.MeshLambertMaterial({ color: COULEURS.caisse, flatShading: true });
-const MAT_RUCHE = new THREE.MeshLambertMaterial({
-  color: COULEURS.ruche, emissive: COULEURS.rucheLueur, flatShading: true });
-const MAT_MENHIR = new THREE.MeshLambertMaterial({ color: COULEURS.menhir, flatShading: true });
-const MAT_GEMME = new THREE.MeshLambertMaterial({
-  color: COULEURS.gemme, emissive: COULEURS.gemmeLueur, flatShading: true });
+const MAT_CAISSE = mat(COULEURS.caisse, { flatShading: true });
+const MAT_RUCHE = mat(COULEURS.ruche, { emissive: COULEURS.rucheLueur, flatShading: true });
+const MAT_MENHIR = mat(COULEURS.menhir, { flatShading: true });
+const MAT_GEMME = mat(COULEURS.gemme, { emissive: COULEURS.gemmeLueur, flatShading: true });
 
 /** Pose un obstacle sur le sol : aplatissement, rotation au hasard, ombres. */
 function poser(mesh, rayon, aplati) {

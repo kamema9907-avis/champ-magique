@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import * as R from './reglages.js';
+import { mat } from './materiaux.js';
 
 /**
  * Ouverture VERTICALE a donner a la camera pour que la largeur de champ visible
@@ -48,11 +49,9 @@ function batirArbres() {
 
   const groupe = new THREE.Group();
   groupe.add(new THREE.Mesh(
-    BufferGeometryUtils.mergeGeometries(troncs),
-    new THREE.MeshLambertMaterial({ color: R.COULEURS.brun })));
+    BufferGeometryUtils.mergeGeometries(troncs), mat(R.COULEURS.brun)));
   groupe.add(new THREE.Mesh(
-    BufferGeometryUtils.mergeGeometries(feuillages),
-    new THREE.MeshLambertMaterial({ color: R.COULEURS.feuille })));
+    BufferGeometryUtils.mergeGeometries(feuillages), mat(R.COULEURS.feuille)));
 
   for (const maille of groupe.children) {
     maille.castShadow = true;
@@ -184,7 +183,7 @@ export function creerMonde() {
   // voit le vide. Bug constate en jouant sur la version Python.
   const sol = new THREE.Mesh(
     new THREE.PlaneGeometry(R.TAILLE_SOL, R.TAILLE_SOL),
-    new THREE.MeshLambertMaterial({ color: R.COULEURS.sol }));
+    mat(R.COULEURS.sol));
   sol.rotation.x = -Math.PI / 2;
   sol.receiveShadow = true;
   scene.add(sol);

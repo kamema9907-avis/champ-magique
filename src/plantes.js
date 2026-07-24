@@ -12,15 +12,14 @@
 import * as THREE from 'three';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { COULEURS } from './reglages.js';
-
-const mat = (couleur) => new THREE.MeshLambertMaterial({ color: couleur });
+import { mat } from './materiaux.js';
 
 const MAT_TIGE = mat(COULEURS.tige);
 const MAT_MOUSSE = mat(COULEURS.mousse);
 const MAT_EPI = mat(COULEURS.epi);
 // Double face obligatoire : le cornet est un cone RETOURNE et ouvert, donc on en
 // voit l'interieur. Sans cela il s'affiche en dard sombre au lieu d'un cornet.
-const MAT_VIOLET = new THREE.MeshLambertMaterial({ color: COULEURS.violet, side: THREE.DoubleSide });
+const MAT_VIOLET = mat(COULEURS.violet, { side: THREE.DoubleSide });
 const MAT_FEUILLE = mat(COULEURS.feuille);
 const MAT_ORANGE = mat(COULEURS.orange);
 const MAT_CYAN = new THREE.MeshBasicMaterial({ color: COULEURS.cyan });   // lumineux
