@@ -40,7 +40,9 @@ html, body {
 }
 
 #score { position: absolute; top: max(14px, env(safe-area-inset-top)); left: max(18px, env(safe-area-inset-left));
-         font-size: clamp(20px, 3.2vw, 34px); font-weight: 700; }
+         font-size: clamp(20px, 3.2vw, 34px); font-weight: 700; transform-origin: left center; }
+#score.pop { animation: pop-score .22s ease-out; }
+@keyframes pop-score { 40% { transform: scale(1.18); } }
 #record { position: absolute; top: calc(max(14px, env(safe-area-inset-top)) + clamp(26px, 3.8vw, 42px));
           left: max(18px, env(safe-area-inset-left)); font-size: clamp(12px, 1.6vw, 17px); color: #ffe9a8; }
 #chrono { position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(18px, env(safe-area-inset-right));

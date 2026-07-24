@@ -293,7 +293,13 @@ export function creerInterface({ surDemarrage }) {
     },
 
     cacherPanneau() { $('panneau').style.display = 'none'; },
-    majScore(score) { $('score').textContent = `Score : ${score}`; },
+    majScore(score) {
+      const el = $('score');
+      el.textContent = `Score : ${score}`;
+      el.classList.remove('pop');
+      void el.offsetWidth;         // force le reflow pour rejouer l'animation
+      el.classList.add('pop');
+    },
 
     majChrono(restant) {
       const chrono = $('chrono');

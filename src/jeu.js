@@ -5,6 +5,7 @@ import * as R from './reglages.js';
 import { TYPES_PLANTES, TYPE_CRISTAL, typeAuHasard } from './plantes.js';
 import { batiJoueur, batiEnnemi, batiChampignon } from './personnages.js';
 import { batiObstacle } from './rochers.js';
+import { creerEffets } from './effets.js';
 
 const auHasard = (min, max) => min + Math.random() * (max - min);
 const borner = (v, min, max) => Math.min(max, Math.max(min, v));
@@ -25,6 +26,10 @@ function versAngle(actuel, cible, pasMax) {
 export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, reliefSol, majCiel }) {
   const joueur = batiJoueur();
   scene.add(joueur);
+
+  const effets = creerEffets(scene);
+  let secousse = 0;          // tremblement d'ecran (sur degat)
+  let poussiereTimer = 0;    // cadence de la poussiere sous les pieds
 
   let etat = 'menu';
   let score = 0;
@@ -187,6 +192,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
     score += points;
     ui.majScore(score);
     sons.recolte(points);
+    effets.eclat(plante.position.x, 0.8, plante.position.z, plante.userData.type.couleur);
     const p = versEcran(plante.position);
     ui.volant(p.x, p.y, `+${points}`, points < 25 ? '#7dff9b' : '#3df2ff');
   }
@@ -197,6 +203,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
     compteurs.degats++;
     compteurs.pointsPerdus += perte;
     invincibleRestant = R.INVINCIBILITE;
+    secousse = 0.4;   // l'ecran tremble un court instant
     sons.jouer('degat');
     ui.majScore(score);
     const p = versEcran(joueur.position);
@@ -287,7 +294,18 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
       joueur.userData.membres.forEach((membre, i) => {
         membre.rotation.x = balancement * (i % 2 === 0 ? 1 : -1);
       });
-      joueur.userData.corps.position.y = Math.abs(Math.sin(cycleMarche)) * 0.07;
+      const corps = joueur.userData.corps;
+      corps.position.y = Math.abs(Math.sin(cycleMarche)) * 0.07;
+      // Squash & stretch : le corps s'ecrase un peu a l'appui (bas du pas).
+      const appui = 1 - Math.abs(Math.sin(cycleMarche));
+      corps.scale.set(1 + appui * 0.06, 1 - appui * 0.08, 1 + appui * 0.06);
+
+      // Poussiere sous les pieds, a cadence reguliere.
+      poussiereTimer -= dt;
+      if (poussiereTimer <= 0) {
+        effets.poussiere(joueur.position.x, joueur.position.z, 0xd8cdbb);
+        poussiereTimer = 0.16;
+      }
     } else {
       cycleMarche = 0;
       for (const membre of joueur.userData.membres) {
@@ -295,6 +313,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
       }
       const corps = joueur.userData.corps;
       corps.position.y += (0 - corps.position.y) * Math.min(1, dt * 10);
+      corps.scale.set(1, 1, 1);
     }
 
     // Rochers du tableau 2 : on bute dessus et on glisse le long du bord.
@@ -368,6 +387,7 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
   function capturerChampignon() {
     tempsRestant += R.CHAMPIGNON_BONUS;
     sons.bonus();
+    effets.eclat(champignon.position.x, 0.8, champignon.position.z, R.COULEURS.epi);   // gerbe doree
     const p = versEcran(champignon.position);
     ui.volant(p.x, p.y, `+${R.CHAMPIGNON_BONUS} s`, '#ffd21f');
     ui.majChrono(tempsRestant);
@@ -509,6 +529,17 @@ export function creerJeu({ scene, camera, commandes, sons, ui, sol, feuillage, r
     const facteur = Math.min(1, dt * R.SUIVI_CAMERA);
     camera.position.x += (joueur.position.x + R.DECALAGE_CAMERA.x - camera.position.x) * facteur;
     camera.position.z += (joueur.position.z + R.DECALAGE_CAMERA.z - camera.position.z) * facteur;
+
+    // Tremblement d'ecran : un decalage transitoire (la camera se recale a l'image
+    // suivante, donc rien ne s'accumule).
+    if (secousse > 0) {
+      secousse = Math.max(0, secousse - dt * 2.5);
+      const s = secousse * 0.7;
+      camera.position.x += (Math.random() - 0.5) * s;
+      camera.position.z += (Math.random() - 0.5) * s;
+    }
+
+    effets.maj(dt);
   }
 
   return {

@@ -130,6 +130,7 @@ test('tableau 2 : les rochers apparaissent, les plantes les evitent, et rien ne 
     for (const r of rochers) {
       distanceMini = Math.min(distanceMini, Math.hypot(j.x - r.x, j.z - r.z));
     }
+    if (i === 25) await page.screenshot({ path: path.join(CAPTURES, 'test_8_juice.png') });
     await page.waitForTimeout(200);
   }
 
