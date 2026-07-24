@@ -84,6 +84,10 @@ export const FOG_FAR = 100;   // distance ou il masque tout (fond, bord du sol)
 export const BLOOM_INTENSITE = 0.7;
 export const BLOOM_RAYON = 0.4;
 export const BLOOM_SEUIL = 0.8;   // seule la luminance au-dessus fait halo
+// Le post-traitement rend a resolution reduite (le bloom coute par pixel x ~10
+// passes) : sur un ecran Retina, 1,25x au lieu de 2x = ~2,5x moins de pixels, le
+// bloom masque le leger adoucissement. Baisser vers 1.0 si l'iPad rame encore.
+export const POST_PIXEL_RATIO_MAX = 1.25;
 
 // Sur PC (16:9) la version Python utilisait 42 deg d'ouverture VERTICALE, ce qui
 // donne cette ouverture HORIZONTALE. On la garde constante quel que soit l'ecran :

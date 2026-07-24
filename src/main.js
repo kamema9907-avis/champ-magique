@@ -57,8 +57,12 @@ function demarrer() {
 function redimensionner() {
   const l = window.innerWidth;
   const h = window.innerHeight;
+  // Resolution reduite quand le post-traitement est actif : le bloom coute par
+  // pixel, donc moins de pixels = beaucoup plus fluide, adoucissement minime.
+  const ratio = Math.min(window.devicePixelRatio, composer ? R.POST_PIXEL_RATIO_MAX : 2);
+  rendu.setPixelRatio(ratio);
   rendu.setSize(l, h);
-  if (composer) composer.setSize(l, h);
+  if (composer) { composer.setPixelRatio(ratio); composer.setSize(l, h); }
   camera.aspect = l / h;
   // L'ouverture s'adapte a la forme de l'ecran pour garder une largeur de champ
   // constante : c'est par les cotes qu'arrivent les Rodeurs.
