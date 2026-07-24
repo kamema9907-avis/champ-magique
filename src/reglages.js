@@ -79,6 +79,12 @@ export const SUIVI_CAMERA = 7.0;    // vitesse de rattrapage de la camera
 export const FOG_NEAR = 45;   // distance (m) ou le brouillard commence
 export const FOG_FAR = 100;   // distance ou il masque tout (fond, bord du sol)
 
+// Post-traitement : halo lumineux (bloom) sur les elements brillants (cristal,
+// gemmes, lave, champignon). Desactive sous ?test. A ajuster / mesurer sur iPad.
+export const BLOOM_INTENSITE = 0.7;
+export const BLOOM_RAYON = 0.4;
+export const BLOOM_SEUIL = 0.8;   // seule la luminance au-dessus fait halo
+
 // Sur PC (16:9) la version Python utilisait 42 deg d'ouverture VERTICALE, ce qui
 // donne cette ouverture HORIZONTALE. On la garde constante quel que soit l'ecran :
 // un iPad (4:3) verra donc plus haut et plus bas, mais AUTANT sur les cotes.
